@@ -1,0 +1,6 @@
+<resources>
+    <style name="Theme.Adonde" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#0B1220</item>
+        <item name="android:windowFullscreen">true</item>
+    </style>
+</resources>

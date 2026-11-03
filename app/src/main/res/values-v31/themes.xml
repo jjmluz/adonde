@@ -1,0 +1,8 @@
+<resources>
+    <!-- The system's launch screen shows the pin on the game's background, then the splash takes over. -->
+    <style name="Theme.Adonde" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#0B1220</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowSplashScreenBackground">#0B1220</item>
+    </style>
+</resources>
