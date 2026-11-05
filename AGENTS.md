@@ -56,8 +56,9 @@ Assets and tools:
 - "Noite" palette: background `#0B1220`, cards `#1C2A44`, accent yellow `#FFC83D`, scrim `#E60B1220`.
 - Logo "ADONDE?" in Outfit weight 800 with a yellow map pin as the O. Outfit is only for the logo.
 - On the playing screens everything sits in one pill at the bottom: D-pad icons + 14 sp hints, with
-  "Ronda X de Y" in a tab hanging below it. The D-pad icon highlights what each control does (only up/down in
-  zoom mode).
+  "Ronda X de Y" in a tab hanging below it. The D-pad icon highlights what each control does.
+- Zoom mode (short OK press) only changes up/down: left/right keep turning or moving the map, so both screens
+  work the same. In zoom mode the pill has a yellow outline and a + / − scale shows at the right edge.
 - Hints use icons of the remote's buttons instead of words: `DpadIcon(centre = true)` for OK, `BackIcon` for
   Back.
 - For bigger visual changes, the user likes mockups first.

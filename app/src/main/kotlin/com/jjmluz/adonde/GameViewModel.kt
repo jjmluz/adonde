@@ -78,6 +78,8 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         private set
     var control by mutableStateOf(Control.MOVE)
         private set
+    /** How far in the panorama or map is zoomed, from 0 (all the way out) to 1, for the zoom scale. */
+    var zoomLevel by mutableFloatStateOf(0f)
     /** How far through a long press of OK, from 0 to 1. */
     var holdProgress by mutableFloatStateOf(0f)
         private set

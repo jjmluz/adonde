@@ -7,6 +7,8 @@ import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import android.widget.FrameLayout
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -30,9 +32,11 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -316,11 +320,12 @@ private fun GuessScreen(viewModel: GameViewModel) {
 }
 
 /**
- * What the arrows and OK do right now, naming [move] as the other mode of the zoom, with the round in a tab
- * hanging below. It turns into a progress bar while OK is held.
+ * What the arrows and OK do right now, with the round in a tab hanging below and the zoom scale at the
+ * side. It turns into a progress bar while OK is held.
  */
 @Composable
 private fun BoxScope.ControlHint(viewModel: GameViewModel, move: String, hold: String, holding: String) {
+    ZoomScale(viewModel, Modifier.align(Alignment.CenterEnd).padding(end = 32.dp))
     Column(
         modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -365,18 +370,29 @@ private fun HintPill(viewModel: GameViewModel, move: String, hold: String, holdi
     if (progress < HOLD_MESSAGE_PROGRESS) {
         Row(
             modifier = Modifier
-                .clip(RoundedCornerShape(26.dp))
+                .clip(PillShape)
                 .background(Scrim)
+                // The yellow outline says zoom mode is on, along with the scale at the side.
+                .border(2.dp, if (zooming) Accent else Color.Transparent, PillShape)
                 .padding(start = 10.dp, end = 20.dp, top = 8.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            DpadIcon(upDown = true, sides = !zooming)
-            Label(if (zooming) "Zoom" else move, 14.sp, Foreground, FontWeight.Bold)
+            if (zooming) {
+                // Left and right still move in zoom mode; only up and down zoom.
+                DpadIcon(sides = true)
+                Label(move, 14.sp, Foreground, FontWeight.Bold)
+                Label("·", 14.sp, Muted, modifier = Modifier.padding(horizontal = 4.dp))
+                DpadIcon(upDown = true)
+                Label("Zoom", 14.sp, Accent, FontWeight.Bold)
+            } else {
+                DpadIcon(upDown = true, sides = true)
+                Label(move, 14.sp, Foreground, FontWeight.Bold)
+            }
             Label("·", 14.sp, Muted, modifier = Modifier.padding(horizontal = 4.dp))
             DpadIcon(centre = true)
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                Label(if (zooming) move else "Zoom", 14.sp, Foreground, FontWeight.Bold)
+                Label(if (zooming) "Sair do zoom" else "Zoom", 14.sp, Foreground, FontWeight.Bold)
                 Label("/ $hold", 14.sp, Foreground)
             }
         }
@@ -394,6 +410,39 @@ private fun HintPill(viewModel: GameViewModel, move: String, hold: String, holdi
                 Box(Modifier.fillMaxHeight().fillMaxWidth(progress).background(Accent))
             }
         }
+    }
+}
+
+private val PillShape = RoundedCornerShape(26.dp)
+private val ZOOM_SCALE_HEIGHT = 220.dp
+
+/** A slim + / − scale at the side with a marker for how far in it is, shown only in zoom mode. */
+@Composable
+private fun ZoomScale(viewModel: GameViewModel, modifier: Modifier = Modifier) {
+    val shown by animateFloatAsState(if (viewModel.control == Control.ZOOM) 1f else 0f, tween(200), label = "zoom scale")
+    if (shown == 0f) return
+    val level = viewModel.zoomLevel
+    Column(
+        modifier = modifier
+            .graphicsLayer { alpha = shown }
+            .clip(CircleShape)
+            .background(Scrim)
+            .border(2.dp, Accent, CircleShape)
+            .padding(horizontal = 10.dp, vertical = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Label("+", 20.sp, Foreground, FontWeight.Bold)
+        Canvas(Modifier.width(20.dp).height(ZOOM_SCALE_HEIGHT)) {
+            val track = 4.dp.toPx()
+            val dot = 8.dp.toPx()
+            val middle = size.width / 2
+            val markerY = dot + (size.height - 2 * dot) * (1 - level)
+            drawLine(Card, Offset(middle, dot), Offset(middle, size.height - dot), track, StrokeCap.Round)
+            drawLine(Accent, Offset(middle, markerY), Offset(middle, size.height - dot), track, StrokeCap.Round)
+            drawCircle(Accent, dot, Offset(middle, markerY))
+        }
+        Label("−", 20.sp, Foreground, FontWeight.Bold)
     }
 }
 
