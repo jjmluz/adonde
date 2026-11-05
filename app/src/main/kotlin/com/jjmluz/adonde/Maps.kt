@@ -151,15 +151,18 @@ fun Panorama(viewModel: GameViewModel, modifier: Modifier = Modifier) {
         zoom = 0f
         tilt = 0f
         bearing = Random.nextFloat() * 360
+        viewModel.zoomLevel = 0f
         current.animateTo(StreetViewPanoramaCamera(zoom, tilt, bearing), 0)
     }
     ControlLoop(viewModel) { x, y, seconds ->
+        // Left and right turn in both modes, so zooming in on something doesn't mean switching back to follow it.
+        bearing = (bearing + x * LOOK_DEGREES_PER_SECOND * seconds + 360) % 360
         when (viewModel.control) {
-            Control.MOVE -> {
-                bearing = (bearing + x * LOOK_DEGREES_PER_SECOND * seconds + 360) % 360
-                tilt = (tilt - y * LOOK_DEGREES_PER_SECOND * seconds).coerceIn(-MAX_TILT, MAX_TILT)
+            Control.MOVE -> tilt = (tilt - y * LOOK_DEGREES_PER_SECOND * seconds).coerceIn(-MAX_TILT, MAX_TILT)
+            Control.ZOOM -> {
+                zoom = (zoom - y * PANORAMA_ZOOM_PER_SECOND * seconds).coerceIn(0f, MAX_PANORAMA_ZOOM)
+                viewModel.zoomLevel = zoom / MAX_PANORAMA_ZOOM
             }
-            Control.ZOOM -> zoom = (zoom - y * PANORAMA_ZOOM_PER_SECOND * seconds).coerceIn(0f, MAX_PANORAMA_ZOOM)
         }
         current.animateTo(StreetViewPanoramaCamera(zoom, tilt, bearing), 0)
     }
@@ -213,18 +216,22 @@ fun GuessMap(viewModel: GameViewModel, avatar: Int, colorIndex: Int, modifier: M
         val current = map ?: return@Box
         LaunchedEffect(current, viewModel.guesserIndex) {
             current.moveCamera(CameraUpdateFactory.newLatLngZoom(WORLD_CENTRE, current.minZoomLevel))
+            viewModel.zoomLevel = 0f
         }
         DisposableEffect(current) {
             viewModel.pinPosition = { current.cameraPosition.target.toPlace() }
             onDispose { viewModel.pinPosition = null }
         }
         ControlLoop(viewModel) { x, y, seconds ->
-            when (viewModel.control) {
-                Control.MOVE -> {
-                    val speed = view.width * MAP_SCREENS_PER_SECOND * seconds
-                    current.moveCamera(CameraUpdateFactory.scrollBy(x * speed, y * speed))
-                }
-                Control.ZOOM -> current.moveCamera(CameraUpdateFactory.zoomBy(-y * MAP_ZOOM_PER_SECOND * seconds))
+            // Left and right move the map in both modes, the same as turning in Street View.
+            val speed = view.width * MAP_SCREENS_PER_SECOND * seconds
+            val down = if (viewModel.control == Control.MOVE) y else 0f
+            if (x != 0f || down != 0f) current.moveCamera(CameraUpdateFactory.scrollBy(x * speed, down * speed))
+            if (viewModel.control == Control.ZOOM && y != 0f) {
+                current.moveCamera(CameraUpdateFactory.zoomBy(-y * MAP_ZOOM_PER_SECOND * seconds))
+                val zoom = current.cameraPosition.zoom
+                viewModel.zoomLevel =
+                    ((zoom - current.minZoomLevel) / (current.maxZoomLevel - current.minZoomLevel)).coerceIn(0f, 1f)
             }
         }
     }
