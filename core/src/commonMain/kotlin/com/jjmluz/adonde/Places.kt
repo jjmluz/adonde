@@ -41,3 +41,6 @@ class PlacePicker(seeds: List<Seed>, private val random: Random) {
 
     private fun spread() = random.nextDouble(-SPREAD_DEGREES, SPREAD_DEGREES)
 }
+
+/** A picker over the whole text of places.csv, for the iOS app, which can't pass a Kotlin [Random] easily. */
+fun placePicker(csv: String): PlacePicker = PlacePicker(parseSeeds(csv.lineSequence()), Random.Default)
