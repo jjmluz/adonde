@@ -1,11 +1,13 @@
 package com.jjmluz.adonde
 
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import kotlin.math.PI
 import kotlin.random.Random
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 private val LISBON = Place(38.7223, -9.1393)
 private val PORTO = Place(41.1579, -8.6291)
@@ -19,7 +21,7 @@ class GlobeTest {
     fun `reads dots as angles`() {
         val dots = parseGlobe(sequenceOf("90.0,180.0", "", "0.0,-90.0"))
         assertEquals(2, dots.size)
-        assertEquals(Math.PI, dots[0].longitude.toDouble(), 0.001)
+        assertEquals(PI, dots[0].longitude.toDouble(), 0.001)
         assertEquals(1.0, dots[0].sinLatitude.toDouble(), 0.001)
         assertEquals(1.0, dots[1].cosLatitude.toDouble(), 0.001)
     }
@@ -60,6 +62,9 @@ class DistanceTest {
         assertEquals("12,345 km", formatKm(12345.2, ".", ","))
         assertEquals("12.345 km", formatKm(12345.2, ",", "."))
         assertEquals("9,9 km", formatKm(9.94, ",", "."))
+        assertEquals("100,0 km", formatKm(99.96, ",", "."))
+        assertEquals("0.0 km", formatKm(0.0, ".", ","))
+        assertEquals("1,234,568 km", formatKm(1234567.5, ".", ","))
     }
 }
 
@@ -123,7 +128,7 @@ class GameTest {
             repeat(3) { game.guess(PORTO) }
             if (!game.isLastRound) game.nextRound()
         }
-        assertEquals(listOf(0, 1, 2, 0), firstGuessers)
+        assertEquals(listOf<Int?>(0, 1, 2, 0), firstGuessers)
     }
 
     @Test
@@ -176,9 +181,9 @@ class GameTest {
         assertTrue(game.isLastRound)
     }
 
-    @Test(expected = IllegalStateException::class)
+    @Test
     fun `there is no round after the last`() {
-        Game(players(1), rounds = 1).nextRound()
+        assertFailsWith<IllegalStateException> { Game(players(1), rounds = 1).nextRound() }
     }
 }
 

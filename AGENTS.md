@@ -33,7 +33,8 @@ ANDROID_SERIAL=192.168.1.94:5555 ./gradlew testDebugUnitTest installRelease
 ANDROID_SERIAL=emulator-5556 ./gradlew :mobile:installRelease                # the phone app
 ```
 
-- Three modules: `shared` (a library with the rules, state, maps, text, assets and font), `app` (the TV) and
+- Four modules: `core` (the rules in plain Kotlin Multiplatform: JVM for Android, plus iOS), `shared` (an
+  Android library with the state, maps, text, assets and font, which re-exports `core`), `app` (the TV) and
   `mobile` (phones and tablets, minSdk 31). Both apps are `com.jjmluz.adonde`, so the Maps key covers them,
   and installing one replaces the other. **`mobile/build.gradle.kts` skips its install tasks unless they're
   named with `:mobile:`**, so the plain `installRelease` above only ever installs the TV app. Keep it that
@@ -52,12 +53,19 @@ ANDROID_SERIAL=emulator-5556 ./gradlew :mobile:installRelease                # t
 
 ## Code map
 
-`shared/src/main/kotlin/com/jjmluz/adonde/` (package `com.jjmluz.adonde`, resources in `com.jjmluz.adonde.shared.R`):
+`core/src/commonMain/kotlin/com/jjmluz/adonde/` (package `com.jjmluz.adonde`; no JVM-only APIs such as `Math` or
+`String.format`, because it's also built for iOS as the `AdondeCore` framework):
 
 | File | Role |
 |---|---|
-| `Game.kt` | The rules, with no Android code: players, rounds, turn order, distances (`distanceKm`), `formatKm`, `withUniqueAvatars`, `OkButton` (tap vs hold). |
+| `Game.kt` | The rules: players, rounds, turn order, distances (`distanceKm`, `radians`), `formatKm`, `withUniqueAvatars`, `OkButton` (tap vs hold). |
 | `Places.kt` | `PlacePicker`: picks a town from `assets/places.csv` and a point near it to search for a panorama. |
+| `GlobeDots.kt` | `parseGlobe`: the globe's dots from `assets/globe.csv`. |
+
+`shared/src/main/kotlin/com/jjmluz/adonde/` (same package, resources in `com.jjmluz.adonde.shared.R`):
+
+| File | Role |
+|---|---|
 | `GameViewModel.kt` | The game's state and flow, open for the TV to extend (`Screen`: SPLASH, SETUP, EXPLORE, GUESS, REVEAL, FINAL; pause). Actions such as `changeRounds`, `startGuessing`, `placeGuess`, `next`. Saves the setup to SharedPreferences only when a game starts. |
 | `Maps.kt` | `StreetViewPanoramaView` and `MapView` inside `AndroidView`: panorama search and filtering, the guess map with a fixed pin, the reveal map (re-fits when it changes size), pin bitmaps. `gestures` turns touch on; a `controls` slot lets the TV drive the camera. |
 | `Theme.kt` | The "Noite" palette, the logo, `NameDialog`, `Avatar`, `ScoreRow`, `Label`, `Message`, `nameOf`, `km`. |
@@ -76,8 +84,9 @@ ANDROID_SERIAL=emulator-5556 ./gradlew :mobile:installRelease                # t
 bars hidden, `configChanges` so turning the device doesn't reload the panorama) and `Screens.kt` (every screen,
 in portrait and landscape; Back via `BackHandler`).
 
-Tests: `shared/src/test/kotlin/com/jjmluz/adonde/GameTest.kt` covers `Game.kt`, `Places.kt` and the globe parser. Put
-new rules in `Game.kt` with a test rather than in the view models, which can't be unit-tested.
+Tests: `core/src/commonTest/kotlin/com/jjmluz/adonde/GameTest.kt` (`kotlin.test`) covers everything in `core`. They run
+on the JVM through `:core:jvmTest`, which `testDebugUnitTest` also runs. Put new rules in `Game.kt` with a test rather
+than in the view models, which can't be unit-tested.
 
 Assets and tools:
 - `shared/src/main/assets/places.csv` ← `tools/build_places.py` (GeoNames `cities15000`).

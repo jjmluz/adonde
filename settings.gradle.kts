@@ -14,4 +14,5 @@ dependencyResolutionManagement {
 }
 rootProject.name = "Adonde"
 // app: the Google TV game. mobile: the same game for phones and tablets. shared: what both use.
-include(":app", ":mobile", ":shared")
+// core: the rules in plain Kotlin, also built for iOS (ios/).
+include(":app", ":mobile", ":shared", ":core")
