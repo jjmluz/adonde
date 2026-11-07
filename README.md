@@ -51,9 +51,9 @@ adb shell cmd locale set-app-locales com.jjmluz.adonde --locales fr-FR
 
 `--locales ""` goes back to following the device.
 
-## iPhone
+## iPhone and iPad
 
-The `ios/` folder holds an iPhone version of the phone app, written in SwiftUI. It uses the same rules (the
+The `ios/` folder holds an iPhone and iPad version of the phone app, written in SwiftUI. It uses the same rules (the
 `core` module, built as a framework) and the same text, places and globe. It plays like the Android phone app:
 drag and pinch, then **Guess** and **Confirm**.
 
@@ -117,7 +117,7 @@ Four Gradle modules:
 - `mobile`: the phone and tablet app. `Screens.kt` has its screens; the panorama and the map take touch
   gestures themselves.
 
-Outside Gradle, `ios/` is the Xcode project for the iPhone app. Its strings come from the Android ones through
+Outside Gradle, `ios/` is the Xcode project for the iPhone and iPad app. Its strings come from the Android ones through
 `tools/build_ios_strings.py`.
 
 ## Testing on an emulator

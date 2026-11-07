@@ -21,8 +21,10 @@ Guide for coding agents working on Adonde. Read `README.md` for the game's rules
   is on the user's Pixel 8 Pro (`192.168.1.131`, wireless debugging: the port changes, see `adb devices`),
   and has been tried on the `Phone_37` emulator (a Pixel 8-sized Android 37 phone, which can also be resized to a tablet with `adb shell wm size 2560x1600` and
   `wm density 320`; reset both afterwards).
-- There is also an iPhone app (`ios/`, SwiftUI), on the `ios` branch: **don't merge it into `main` until the user
-  says so**. iPad comes next; Apple TV was dropped, because Google's Maps SDK doesn't run on it.
+- There is also an iPhone and iPad app (`ios/`, SwiftUI), on the `ios` branch: **don't merge it into `main` until the
+  user says so**. Apple TV was dropped, because Google's Maps SDK doesn't run on it. On iPad it turns every way,
+  and can share the screen with other apps; the layouts follow the window's size, like the phone app's. Check iPad
+  layouts on the `iPad Air 11-inch (M4)` simulator.
 - The home screen is the user's own launcher (`com.jj.launcher`, `~/projects/jj-launcher`). Adonde is on its
   third row, with the banner from `res/drawable-nodpi/banner.png`.
 - The TV is in use by the family. Anything you do on it is visible.
@@ -53,7 +55,7 @@ ANDROID_SERIAL=emulator-5556 ./gradlew :mobile:installRelease                # t
 - `local.properties` holds `sdk.dir` and `MAPS_API_KEY`, and is git-ignored. **Never print, paste or commit
   the key.** It reaches the manifest through `manifestPlaceholders`.
 
-The iPhone app (needs Xcode; `ios/Config/Secrets.xcconfig` holds `MAPS_API_KEY`, a separate key restricted to
+The iPhone and iPad app (needs Xcode; `ios/Config/Secrets.xcconfig` holds `MAPS_API_KEY`, a separate key restricted to
 iOS apps with the bundle id `com.jjmluz.adonde`; **never print or commit it**):
 
 ```bash
@@ -117,7 +119,7 @@ xcrun devicectl device process launch --device <device id> com.jjmluz.adonde
 bars hidden, `configChanges` so turning the device doesn't reload the panorama) and `Screens.kt` (every screen,
 in portrait and landscape; Back via `BackHandler`).
 
-`ios/Adonde/` (the iPhone, a port of `mobile`): `GameModel.swift` (the twin of `GameViewModel`, saving the setup to
+`ios/Adonde/` (iPhone and iPad, a port of `mobile`): `GameModel.swift` (the twin of `GameViewModel`, saving the setup to
 `UserDefaults` under the Android keys), `Screens.swift`, `Maps.swift` (`GMSPanoramaView` and `GMSMapView` in
 `UIViewRepresentable`s), `Theme.swift` (palette, logo, `tr` for strings, `km`, pins), `Globe.swift`.
 
