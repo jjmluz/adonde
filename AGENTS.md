@@ -10,11 +10,17 @@ Guide for coding agents working on Adonde. Read `README.md` for the game's rules
   Portuguese from Portugal (`values-pt`, also used for Brazilian), Spanish (`values-es`) and French
   (`values-fr`). The family's TV is in Portuguese: "Ronda 1 de 5", "Manter premido para adivinhar",
   "Voltar ao início". The user picks the Portuguese wording; don't rephrase it unasked. A new string goes in
-  all four files; a new language also goes in `localeFilters` in `app/build.gradle.kts`.
+  all four files, under `shared/src/main/res/`; a new language also goes in `localeFilters` in
+  `app/build.gradle.kts` and `mobile/build.gradle.kts`. The phone's own strings are in a block at the end
+  of each file; their Portuguese hasn't been checked by the user yet.
 - Number marks come from the `decimal_mark` / `group_mark` strings, not the locale, so a German TV gets
   English text with English numbers. An empty player name means the default "Player N" in the TV's language.
 - To see another language without changing the device's:
   `adb shell cmd locale set-app-locales com.jjmluz.adonde --locales fr-FR` (`--locales ""` resets it).
+- There is also a phone and tablet app (`mobile`), played by touch and passed from player to player. It
+  isn't on any of the family's devices yet; it has been tried on the `Phone_37` emulator (a Pixel 8-sized
+  Android 37 phone, which can also be resized to a tablet with `adb shell wm size 2560x1600` and
+  `wm density 320`; reset both afterwards).
 - The home screen is the user's own launcher (`com.jj.launcher`, `~/projects/jj-launcher`). Adonde is on its
   third row, with the banner from `res/drawable-nodpi/banner.png`.
 - The TV is in use by the family. Anything you do on it is visible.
@@ -24,7 +30,14 @@ Guide for coding agents working on Adonde. Read `README.md` for the game's rules
 ```bash
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"   # shell Java is too old
 ANDROID_SERIAL=192.168.1.94:5555 ./gradlew testDebugUnitTest installRelease
+ANDROID_SERIAL=emulator-5556 ./gradlew :mobile:installRelease                # the phone app
 ```
+
+- Three modules: `shared` (a library with the rules, state, maps, text, assets and font), `app` (the TV) and
+  `mobile` (phones and tablets, minSdk 31). Both apps are `com.jjmluz.adonde`, so the Maps key covers them,
+  and installing one replaces the other. **`mobile/build.gradle.kts` skips its install tasks unless they're
+  named with `:mobile:`**, so the plain `installRelease` above only ever installs the TV app. Keep it that
+  way: the phone app over the TV app would leave the family without the game.
 
 - AGP 9.2.1, Gradle 9.4.1, Kotlin 2.4.10, Compose BOM 2026.09.00 (foundation only), play-services-maps 20.1.0,
   minSdk 26, targetSdk 37.
@@ -37,25 +50,40 @@ ANDROID_SERIAL=192.168.1.94:5555 ./gradlew testDebugUnitTest installRelease
 - `local.properties` holds `sdk.dir` and `MAPS_API_KEY`, and is git-ignored. **Never print, paste or commit
   the key.** It reaches the manifest through `manifestPlaceholders`.
 
-## Code map (`app/src/main/kotlin/com/jjmluz/adonde/`)
+## Code map
+
+`shared/src/main/kotlin/com/jjmluz/adonde/` (package `com.jjmluz.adonde`, resources in `com.jjmluz.adonde.shared.R`):
 
 | File | Role |
 |---|---|
 | `Game.kt` | The rules, with no Android code: players, rounds, turn order, distances (`distanceKm`), `formatKm`, `withUniqueAvatars`, `OkButton` (tap vs hold). |
 | `Places.kt` | `PlacePicker`: picks a town from `assets/places.csv` and a point near it to search for a panorama. |
-| `GameViewModel.kt` | All game state and what each key does (`Screen`: SPLASH, SETUP, EXPLORE, GUESS, REVEAL, FINAL; `Control`: MOVE, ZOOM; pause). Saves the setup to SharedPreferences only when a game starts. |
-| `MainActivity.kt` | Single activity; sends keys from `dispatchKeyEvent` to the view model. |
-| `Screens.kt` | Every Compose screen, colours (the "Noite" palette), the logo, `ControlHint` with the round tab, `DpadIcon`, `BackIcon`, the pause overlay. |
-| `Maps.kt` | `StreetViewPanoramaView` and `MapView` inside `AndroidView`: panorama search and filtering, the guess map with a fixed pin, the reveal map, pin bitmaps. |
+| `GameViewModel.kt` | The game's state and flow, open for the TV to extend (`Screen`: SPLASH, SETUP, EXPLORE, GUESS, REVEAL, FINAL; pause). Actions such as `changeRounds`, `startGuessing`, `placeGuess`, `next`. Saves the setup to SharedPreferences only when a game starts. |
+| `Maps.kt` | `StreetViewPanoramaView` and `MapView` inside `AndroidView`: panorama search and filtering, the guess map with a fixed pin, the reveal map (re-fits when it changes size), pin bitmaps. `gestures` turns touch on; a `controls` slot lets the TV drive the camera. |
+| `Theme.kt` | The "Noite" palette, the logo, `NameDialog`, `Avatar`, `ScoreRow`, `Label`, `Message`, `nameOf`, `km`. |
 | `Globe.kt` | The spinning dot globe on the splash and search screens, drawn on a `Canvas` each frame. |
 
-Tests: `app/src/test/kotlin/com/jjmluz/adonde/GameTest.kt` covers `Game.kt`, `Places.kt` and the globe parser. Put
-new rules in `Game.kt` with a test rather than in the view model, which can't be unit-tested.
+`app/src/main/kotlin/com/jjmluz/adonde/` (the TV):
+
+| File | Role |
+|---|---|
+| `TvViewModel.kt` | What each key does: `Control` (MOVE, ZOOM), the setup's selected row, holding OK, the arrows held. |
+| `MainActivity.kt` | Single activity; sends keys from `dispatchKeyEvent` to the view model. |
+| `Controls.kt` | `TvPanorama` and `TvGuessMap`: the D-pad turning the panorama and moving the map, frame by frame. |
+| `Screens.kt` | The TV's screens, `ControlHint` with the round tab, `DpadIcon`, `BackIcon`, the pause overlay. |
+
+`mobile/src/main/kotlin/com/jjmluz/adonde/mobile/` (phones and tablets): `MainActivity.kt` (edge to edge, system
+bars hidden, `configChanges` so turning the device doesn't reload the panorama) and `Screens.kt` (every screen,
+in portrait and landscape; Back via `BackHandler`).
+
+Tests: `shared/src/test/kotlin/com/jjmluz/adonde/GameTest.kt` covers `Game.kt`, `Places.kt` and the globe parser. Put
+new rules in `Game.kt` with a test rather than in the view models, which can't be unit-tested.
 
 Assets and tools:
-- `assets/places.csv` ← `tools/build_places.py` (GeoNames `cities15000`).
-- `assets/globe.csv` ← `tools/build_globe.py path/to/land-110m.json app/src/main/assets/globe.csv` (world-atlas).
-- `res/drawable-nodpi/banner.png` and `icon.png` ← `tools/make_art.swift` (uses `res/font/outfit.ttf`).
+- `shared/src/main/assets/places.csv` ← `tools/build_places.py` (GeoNames `cities15000`).
+- `shared/src/main/assets/globe.csv` ← `tools/build_globe.py path/to/land-110m.json shared/src/main/assets/globe.csv` (world-atlas).
+- `app/src/main/res/drawable-nodpi/banner.png` and `icon.png` ← `tools/make_art.swift app/src/main/res/drawable-nodpi`
+  (uses `shared/src/main/res/font/outfit.ttf`). The phone's adaptive icon is `mobile/src/main/res/drawable/ic_launcher_pin.xml`.
 - Run Python on downloaded data with `python3 -I`, from outside the download's folder. Ask before downloading.
 
 ## Design (agreed with the user)
@@ -69,6 +97,9 @@ Assets and tools:
 - Hints use icons of the remote's buttons instead of words: `DpadIcon(centre = true)` for OK, `BackIcon` for
   Back.
 - For bigger visual changes, the user likes mockups first.
+- On the phone: the panorama and the map take the touch gestures themselves (drag, pinch). **Guess** and
+  **Confirm** are taps rather than holds. A pause button sits top-left; the buttons stay above the bottom
+  edge so Google's notices show. Overlays that must stop touches reaching the map use `blockTouches()`.
 
 ## Google Maps rules
 
@@ -106,6 +137,9 @@ Assets and tools:
   harness. Push to `origin` (the user's private GitHub repo) when they ask.
 
 ## Still unverified
+
+- The phone app on a real phone or tablet: pinching (adb can't pinch), the feel of the gestures, and the
+  reveal board on a tablet with several columns.
 
 - On the TV: the reveal and final screens, the "no internet" screen (disconnect the TV), and the duplicate
   avatar fix.

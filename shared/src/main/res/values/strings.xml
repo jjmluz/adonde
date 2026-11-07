@@ -51,4 +51,14 @@
     <!-- Pause -->
     <string name="resume">Resume</string>
     <string name="quit">Quit</string>
+
+    <!-- Phones and tablets: taps and gestures instead of the remote -->
+    <string name="tap_to_rename">Tap a name or an animal to change it</string>
+    <string name="guess">Guess</string>
+    <string name="confirm">Confirm</string>
+    <string name="drag_to_look">Drag to look around, pinch to zoom</string>
+    <string name="drag_map">Drag the map under the pin, pinch to zoom</string>
+    <string name="next_round">Next round</string>
+    <string name="retry">Try again</string>
+    <string name="pause">Pause</string>
 </resources>

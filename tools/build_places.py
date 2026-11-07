@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Builds app/src/main/assets/places.csv from GeoNames' cities15000.txt.
+"""Builds shared/src/main/assets/places.csv from GeoNames' cities15000.txt.
 
-Usage: build_places.py path/to/cities15000.txt app/src/main/assets/places.csv
+Usage: build_places.py path/to/cities15000.txt shared/src/main/assets/places.csv
 
 Only countries with wide Street View coverage are kept, so few searches come back empty.
 """
