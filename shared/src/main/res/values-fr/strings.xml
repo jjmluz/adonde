@@ -45,11 +45,8 @@
     <string name="quit">Quitter</string>
 
     <!-- Téléphones et tablettes -->
-    <string name="tap_to_rename">Touchez un nom ou un animal pour le changer</string>
     <string name="guess">Deviner</string>
     <string name="confirm">Confirmer</string>
-    <string name="drag_to_look">Faites glisser pour regarder autour, pincez pour zoomer</string>
-    <string name="drag_map">Faites glisser la carte sous l’épingle, pincez pour zoomer</string>
     <string name="next_round">Manche suivante</string>
     <string name="retry">Réessayer</string>
     <string name="pause">Pause</string>

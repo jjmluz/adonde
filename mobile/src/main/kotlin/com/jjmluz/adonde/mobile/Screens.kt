@@ -200,7 +200,6 @@ private fun ColumnScope.PlayerList(viewModel: GameViewModel) {
     viewModel.players.take(viewModel.playerCount).forEachIndexed { index, player ->
         PlayerRow(index, player, viewModel)
     }
-    Label(stringResource(R.string.tap_to_rename), 14.sp, Muted, modifier = Modifier.align(Alignment.CenterHorizontally))
 }
 
 @Composable
@@ -270,7 +269,7 @@ private fun ExploreScreen(viewModel: GameViewModel) {
                 }
             }
         } else {
-            PlayingOverlay(viewModel, stringResource(R.string.drag_to_look), stringResource(R.string.guess), viewModel::startGuessing) {
+            PlayingOverlay(viewModel, stringResource(R.string.guess), viewModel::startGuessing) {
                 Chip { Label(stringResource(R.string.round_of, viewModel.round, viewModel.rounds), 15.sp, Foreground, FontWeight.Bold) }
             }
         }
@@ -283,7 +282,7 @@ private fun GuessScreen(viewModel: GameViewModel) {
     val player = viewModel.guesser ?: return
     Box(Modifier.fillMaxSize()) {
         GuessMap(viewModel, player.avatar, index, gestures = true, Modifier.windowInsetsPadding(WindowInsets.safeDrawing)) { _, _ -> }
-        PlayingOverlay(viewModel, stringResource(R.string.drag_map), stringResource(R.string.confirm), viewModel::placeGuess) {
+        PlayingOverlay(viewModel, stringResource(R.string.confirm), viewModel::placeGuess) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Chip {
                     Avatar(player.avatar, index, 30.dp, Modifier.padding(end = 8.dp))
@@ -303,12 +302,11 @@ private fun GuessScreen(viewModel: GameViewModel) {
 
 /**
  * What goes over the panorama and the guess map: the pause button, [top] in the middle at the top, and at
- * the bottom a [hint] above the button that moves the game on. The bottom edge is left to Google's notices.
+ * the bottom the button that moves the game on. The bottom edge is left to Google's notices.
  */
 @Composable
 private fun PlayingOverlay(
     viewModel: GameViewModel,
-    hint: String,
     action: String,
     onAction: () -> Unit,
     top: @Composable () -> Unit,
@@ -321,17 +319,11 @@ private fun PlayingOverlay(
             drawRoundRect(Foreground, Offset(size.width * 0.54f, size.height * 0.3f), bar, radius)
         }
         Box(Modifier.align(Alignment.TopCenter).padding(horizontal = 56.dp)) { top() }
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = GOOGLE_NOTICES - 12.dp)
-                .widthIn(max = 420.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Chip { Label(hint, 14.sp, Foreground) }
-            ActionButton(action, Modifier.widthIn(min = 200.dp), onClick = onAction)
-        }
+        ActionButton(
+            text = action,
+            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = GOOGLE_NOTICES - 12.dp).widthIn(min = 200.dp),
+            onClick = onAction,
+        )
     }
 }
 
