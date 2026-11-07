@@ -35,7 +35,7 @@ The `mobile` app plays the same rounds, passing the device from player to player
 ## Languages
 
 The game follows the device's language: English, Portuguese (from Portugal, also used on Brazilian Portuguese
-TVs), Spanish and French. Any other language falls back to English. The text is in
+devices), Spanish and French. Any other language falls back to English. The text is in
 `shared/src/main/res/values*/strings.xml`, with English in `values/`. Distances use the number style of the
 language the text is in ("1,234 km" in English, "1 234 km" in Portuguese), and players without a name of
 their own are shown as "Player 1", "Jogador 1" and so on.
@@ -83,7 +83,8 @@ above.
 Use the release build: on the TV it starts about four times faster than `installDebug`. Both are signed with
 the debug key, so one installs over the other and the Maps key works with either.
 
-If several devices are connected, pick one with `ANDROID_SERIAL` (see `adb devices`).
+If several devices are connected, pick one with `ANDROID_SERIAL` (see `adb devices`). A phone connects over
+wireless debugging (Developer options), whose port changes; `adb devices` shows the current one.
 
 ## Layout
 
@@ -103,6 +104,9 @@ Three Gradle modules:
   gestures themselves.
 
 ## Testing on an emulator
+
+A Google TV emulator is fine for the TV app's layout, and any phone emulator with Google Play for the phone
+app. Every round loads a panorama, which counts towards the Street View quota.
 
 `adb shell input keyevent` is too quick to count as holding a key. This holds one for as long as you like
 (the second key is only there because the command needs two):
@@ -124,7 +128,7 @@ is days behind and hostname lookups hang). Cold-boot it with `emulator -avd <nam
   land on Google's own roads: about 3 in 4 do.
 - **Map zoom:** on Google TV the SDK only has its older renderer, which never zooms out past about 168° of
   longitude. The whole world can't be on screen at once, so the reveal centres on the answer when the pins
-  don't all fit.
+  don't all fit. Phones have the newer renderer, but the reveal does the same when far-apart pins don't fit.
 
 ## Places
 

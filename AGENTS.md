@@ -18,8 +18,8 @@ Guide for coding agents working on Adonde. Read `README.md` for the game's rules
 - To see another language without changing the device's:
   `adb shell cmd locale set-app-locales com.jjmluz.adonde --locales fr-FR` (`--locales ""` resets it).
 - There is also a phone and tablet app (`mobile`), played by touch and passed from player to player. It
-  isn't on any of the family's devices yet; it has been tried on the `Phone_37` emulator (a Pixel 8-sized
-  Android 37 phone, which can also be resized to a tablet with `adb shell wm size 2560x1600` and
+  is on the user's Pixel 8 Pro (`192.168.1.131`, wireless debugging: the port changes, see `adb devices`),
+  and has been tried on the `Phone_37` emulator (a Pixel 8-sized Android 37 phone, which can also be resized to a tablet with `adb shell wm size 2560x1600` and
   `wm density 320`; reset both afterwards).
 - The home screen is the user's own launcher (`com.jj.launcher`, `~/projects/jj-launcher`). Adonde is on its
   third row, with the banner from `res/drawable-nodpi/banner.png`.
@@ -137,6 +137,8 @@ Assets and tools:
   harness. Push to `origin` (the user's private GitHub repo) when they ask.
 
 ## Still unverified
+
+The TV app after the split into modules was checked on the TV by the user (7 November 2026).
 
 - The phone app on a real phone or tablet: pinching (adb can't pinch), the feel of the gestures, and the
   reveal board on a tablet with several columns.
