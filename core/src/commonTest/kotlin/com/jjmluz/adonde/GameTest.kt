@@ -105,7 +105,7 @@ class AvatarTest {
 
 class GameTest {
     @Test
-    fun `everyone guesses once each round, in order`() {
+    fun `everyone guesses once each round in order`() {
         val game = Game(players(3), rounds = 2)
         game.startRound(LISBON)
 
@@ -202,7 +202,7 @@ class OkButtonTest {
     }
 
     @Test
-    fun `a held press only completes once, and its release does nothing`() {
+    fun `a held press only completes once and its release does nothing`() {
         button.press(0)
         assertEquals(0.5f, button.progress(500), 0.001f)
         assertEquals(1f, button.progress(1000), 0.001f)

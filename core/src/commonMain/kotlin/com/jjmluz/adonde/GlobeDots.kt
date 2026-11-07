@@ -14,3 +14,6 @@ fun parseGlobe(lines: Sequence<String>): List<GlobeDot> = lines
         GlobeDot(lng, sin(lat), cos(lat))
     }
     .toList()
+
+/** [parseGlobe] over the whole text of globe.csv, for the iOS app. */
+fun parseGlobe(csv: String): List<GlobeDot> = parseGlobe(csv.lineSequence())
