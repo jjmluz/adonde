@@ -51,4 +51,11 @@
     <!-- Pause -->
     <string name="resume">Resume</string>
     <string name="quit">Quit</string>
+
+    <!-- Phones and tablets: taps and gestures instead of the remote -->
+    <string name="guess">Guess</string>
+    <string name="confirm">Confirm</string>
+    <string name="next_round">Next round</string>
+    <string name="retry">Try again</string>
+    <string name="pause">Pause</string>
 </resources>

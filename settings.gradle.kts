@@ -13,4 +13,5 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "Adonde"
-include(":app")
+// app: the Google TV game. mobile: the same game for phones and tablets. shared: what both use.
+include(":app", ":mobile", ":shared")

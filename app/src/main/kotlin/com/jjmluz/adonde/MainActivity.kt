@@ -8,7 +8,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 
 class MainActivity : ComponentActivity() {
-    private val viewModel: GameViewModel by viewModels()
+    private val viewModel: TvViewModel by viewModels()
     private val usedKeys = mutableSetOf<Int>()
 
     override fun onCreate(savedInstanceState: Bundle?) {

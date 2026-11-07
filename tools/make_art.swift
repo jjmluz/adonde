@@ -1,10 +1,12 @@
-// Draws the launcher banner and icon. Usage: swift tools/make_art.swift app/src/main/res/drawable-nodpi
+// Draws the TV launcher banner and icon. Usage: swift tools/make_art.swift app/src/main/res/drawable-nodpi
 import AppKit
 
 let background = NSColor(red: 0.043, green: 0.071, blue: 0.125, alpha: 1)
 let foreground = NSColor(red: 0.957, green: 0.965, blue: 0.984, alpha: 1)
 let accent = NSColor(red: 1, green: 0.784, blue: 0.239, alpha: 1)
-let fontFile = URL(fileURLWithPath: CommandLine.arguments[1] + "/../font/outfit.ttf")
+// The logo font is shared by both apps, so it lives in the shared module.
+let fontFile = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+    .appendingPathComponent("../shared/src/main/res/font/outfit.ttf")
 let outfit = CGFont(CGDataProvider(url: fontFile as CFURL)!)!.copy(withVariations: ["Weight": 800] as CFDictionary)!
 
 func pin(height: CGFloat, tip: CGPoint) {
