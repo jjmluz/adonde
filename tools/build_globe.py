@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Builds app/src/main/assets/globe.csv: the dots of land on the spinning globe.
+"""Builds shared/src/main/assets/globe.csv: the dots of land on the spinning globe.
 
-Usage: build_globe.py path/to/land-110m.json app/src/main/assets/globe.csv
+Usage: build_globe.py path/to/land-110m.json shared/src/main/assets/globe.csv
 
 The source comes from the world-atlas package, which is Natural Earth's land in TopoJSON.
 """

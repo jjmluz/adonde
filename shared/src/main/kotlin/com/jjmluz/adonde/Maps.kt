@@ -7,6 +7,7 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
 import android.graphics.Typeface
+import android.view.View
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,12 +16,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
@@ -29,6 +27,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -45,28 +44,22 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.PolylineOptions
-import com.google.android.gms.maps.model.StreetViewPanoramaCamera
 import com.google.android.gms.maps.model.StreetViewSource
-import kotlin.random.Random
 
 /** How far from the chosen point a panorama can be, in metres. */
 private const val SEARCH_RADIUS_METRES = 2000
 private const val GOOGLE_PANO_ID_LENGTH = 22
-private const val LOOK_DEGREES_PER_SECOND = 50f
-private const val PANORAMA_ZOOM_PER_SECOND = 1.5f
-private const val MAX_PANORAMA_ZOOM = 3.5f
-private const val MAX_TILT = 80f
-private const val MAP_SCREENS_PER_SECOND = 0.3f
-private const val MAP_ZOOM_PER_SECOND = 1.2f
 private const val MAX_REVEAL_ZOOM = 11f
 private const val PIN_WIDTH = 44
 private const val PIN_HEIGHT = 58
 
-private val WORLD_CENTRE = LatLng(25.0, 10.0)
+private val REVEAL_MARGIN = 60.dp
 
-private fun Place.toLatLng() = LatLng(lat, lng)
+val WORLD_CENTRE = LatLng(25.0, 10.0)
 
-private fun LatLng.toPlace() = Place(latitude, longitude)
+fun Place.toLatLng() = LatLng(lat, lng)
+
+fun LatLng.toPlace() = Place(latitude, longitude)
 
 /** Passes the activity's lifecycle on to a Google view, then takes it down with the composition. */
 @Composable
@@ -84,35 +77,25 @@ private fun ForwardLifecycle(forward: (Lifecycle.Event) -> Unit) {
     }
 }
 
-/** Calls [move] each frame with the arrows held, boosted, and the seconds since the last frame. */
+/**
+ * Full-screen Street View that searches until it lands on a road. Moving around is never allowed;
+ * with [gestures] the player looks around and zooms by touch, and without them [controls] moves the
+ * camera itself. [controls] runs once the panorama is ready.
+ */
 @Composable
-private fun ControlLoop(viewModel: GameViewModel, move: (x: Float, y: Float, seconds: Float) -> Unit) {
-    val currentMove by rememberUpdatedState(move)
-    LaunchedEffect(Unit) {
-        var last = withFrameMillis { it }
-        while (true) {
-            withFrameMillis { now ->
-                val seconds = (now - last) / 1000f
-                last = now
-                viewModel.tick()
-                val x = viewModel.horizontal
-                val y = viewModel.vertical
-                if (x != 0 || y != 0) currentMove(x * viewModel.boost, y * viewModel.boost, seconds)
-            }
-        }
-    }
-}
-
-/** Full-screen Street View: searches until it lands on a road, then looks around and zooms. */
-@Composable
-fun Panorama(viewModel: GameViewModel, modifier: Modifier = Modifier) {
+fun Panorama(
+    viewModel: GameViewModel,
+    gestures: Boolean,
+    modifier: Modifier = Modifier,
+    controls: @Composable (StreetViewPanorama) -> Unit,
+) {
     val context = LocalContext.current
     val view = remember {
         val options = StreetViewPanoramaOptions()
             .userNavigationEnabled(false)
             .streetNamesEnabled(false)
-            .panningGesturesEnabled(false)
-            .zoomGesturesEnabled(false)
+            .panningGesturesEnabled(gestures)
+            .zoomGesturesEnabled(gestures)
         StreetViewPanoramaView(context, options).apply { onCreate(null) }
     }
     ForwardLifecycle { event ->
@@ -144,32 +127,12 @@ fun Panorama(viewModel: GameViewModel, modifier: Modifier = Modifier) {
             current.setPosition(it.toLatLng(), SEARCH_RADIUS_METRES, StreetViewSource.OUTDOOR)
         }
     }
-    var zoom by remember { mutableFloatStateOf(0f) }
-    var tilt by remember { mutableFloatStateOf(0f) }
-    var bearing by remember { mutableFloatStateOf(0f) }
-    LaunchedEffect(current, viewModel.spot) {
-        zoom = 0f
-        tilt = 0f
-        bearing = Random.nextFloat() * 360
-        viewModel.zoomLevel = 0f
-        current.animateTo(StreetViewPanoramaCamera(zoom, tilt, bearing), 0)
-    }
-    ControlLoop(viewModel) { x, y, seconds ->
-        // Left and right turn in both modes, so zooming in on something doesn't mean switching back to follow it.
-        bearing = (bearing + x * LOOK_DEGREES_PER_SECOND * seconds + 360) % 360
-        when (viewModel.control) {
-            Control.MOVE -> tilt = (tilt - y * LOOK_DEGREES_PER_SECOND * seconds).coerceIn(-MAX_TILT, MAX_TILT)
-            Control.ZOOM -> {
-                zoom = (zoom - y * PANORAMA_ZOOM_PER_SECOND * seconds).coerceIn(0f, MAX_PANORAMA_ZOOM)
-                viewModel.zoomLevel = zoom / MAX_PANORAMA_ZOOM
-            }
-        }
-        current.animateTo(StreetViewPanoramaCamera(zoom, tilt, bearing), 0)
-    }
+    controls(current)
 }
 
+/** A Google map with its own buttons off. [gestures] lets it be moved and zoomed by touch, but never turned. */
 @Composable
-private fun rememberMap(modifier: Modifier = Modifier): Pair<MapView, GoogleMap?> {
+fun rememberMap(gestures: Boolean, modifier: Modifier = Modifier): Pair<MapView, GoogleMap?> {
     val context = LocalContext.current
     val view = remember {
         val options = GoogleMapOptions()
@@ -178,8 +141,8 @@ private fun rememberMap(modifier: Modifier = Modifier): Pair<MapView, GoogleMap?
             .zoomControlsEnabled(false)
             .rotateGesturesEnabled(false)
             .tiltGesturesEnabled(false)
-            .scrollGesturesEnabled(false)
-            .zoomGesturesEnabled(false)
+            .scrollGesturesEnabled(gestures)
+            .zoomGesturesEnabled(gestures)
         MapView(context, options).apply { onCreate(null) }
     }
     ForwardLifecycle { event ->
@@ -198,11 +161,21 @@ private fun rememberMap(modifier: Modifier = Modifier): Pair<MapView, GoogleMap?
     return view to map
 }
 
-/** The full-screen map with the pin fixed in the middle. Moving the map is what places the pin. */
+/**
+ * The full-screen map with the pin fixed in the middle. Moving the map is what places the pin: by touch
+ * with [gestures], or by [controls] otherwise. It goes back to the whole world for each player.
+ */
 @Composable
-fun GuessMap(viewModel: GameViewModel, avatar: Int, colorIndex: Int, modifier: Modifier = Modifier) {
+fun GuessMap(
+    viewModel: GameViewModel,
+    avatar: Int,
+    colorIndex: Int,
+    gestures: Boolean,
+    modifier: Modifier = Modifier,
+    controls: @Composable (MapView, GoogleMap) -> Unit,
+) {
     Box(modifier.fillMaxSize()) {
-        val (view, map) = rememberMap()
+        val (view, map) = rememberMap(gestures)
         val context = LocalContext.current
         val pin = remember(avatar, colorIndex) {
             pinBitmap(context, PLAYER_COLORS[colorIndex].toArgb(), AVATARS[avatar]).asImageBitmap()
@@ -216,39 +189,52 @@ fun GuessMap(viewModel: GameViewModel, avatar: Int, colorIndex: Int, modifier: M
         val current = map ?: return@Box
         LaunchedEffect(current, viewModel.guesserIndex) {
             current.moveCamera(CameraUpdateFactory.newLatLngZoom(WORLD_CENTRE, current.minZoomLevel))
-            viewModel.zoomLevel = 0f
         }
         DisposableEffect(current) {
             viewModel.pinPosition = { current.cameraPosition.target.toPlace() }
             onDispose { viewModel.pinPosition = null }
         }
-        ControlLoop(viewModel) { x, y, seconds ->
-            // Left and right move the map in both modes, the same as turning in Street View.
-            val speed = view.width * MAP_SCREENS_PER_SECOND * seconds
-            val down = if (viewModel.control == Control.MOVE) y else 0f
-            if (x != 0f || down != 0f) current.moveCamera(CameraUpdateFactory.scrollBy(x * speed, down * speed))
-            if (viewModel.control == Control.ZOOM && y != 0f) {
-                current.moveCamera(CameraUpdateFactory.zoomBy(-y * MAP_ZOOM_PER_SECOND * seconds))
-                val zoom = current.cameraPosition.zoom
-                viewModel.zoomLevel =
-                    ((zoom - current.minZoomLevel) / (current.maxZoomLevel - current.minZoomLevel)).coerceIn(0f, 1f)
-            }
-        }
+        controls(view, current)
     }
 }
 
-/** The answer: the real place, everyone's pin, and a line between them. */
+/**
+ * The answer: the real place, everyone's pin, and a line between them. [bottom] and [right] are what the
+ * scoreboard covers, so the pins fit in the rest. It fits them again when the map changes size.
+ */
 @Composable
-fun RevealMap(place: Place, scores: List<Score>, players: List<Player>, boardHeight: Dp, modifier: Modifier = Modifier) {
+fun RevealMap(
+    place: Place,
+    scores: List<Score>,
+    players: List<Player>,
+    bottom: Dp,
+    modifier: Modifier = Modifier,
+    right: Dp = 0.dp,
+) {
     val context = LocalContext.current
     val density = LocalDensity.current
-    val (_, map) = rememberMap(modifier)
+    val (view, map) = rememberMap(gestures = false, modifier)
     val current = map ?: return
+    val target = place.toLatLng()
+    val points = listOf(target) + scores.mapNotNull { it.guess?.toLatLng() }
+    var loaded by remember(current) { mutableStateOf(false) }
+
+    fun fit() {
+        if (view.width == 0 || view.height == 0) return
+        val bounds = LatLngBounds.Builder().apply { points.forEach(::include) }.build()
+        val margin = with(density) { REVEAL_MARGIN.roundToPx() }
+        current.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, margin))
+        if (current.cameraPosition.zoom > MAX_REVEAL_ZOOM) {
+            current.moveCamera(CameraUpdateFactory.zoomTo(MAX_REVEAL_ZOOM))
+        }
+        // The map may not zoom out to the whole world, so far-apart pins may not fit. The answer
+        // always has to show; the others are still on the board, with their lines leading off.
+        val visible = current.projection.visibleRegion.latLngBounds
+        if (!points.all(visible::contains)) current.moveCamera(CameraUpdateFactory.newLatLng(target))
+    }
+
     LaunchedEffect(current, place) {
         current.clear()
-        current.setPadding(0, 0, 0, with(density) { boardHeight.roundToPx() })
-        val target = place.toLatLng()
-        val points = listOf(target) + scores.mapNotNull { it.guess?.toLatLng() }
         scores.forEach { score ->
             val guess = score.guess?.toLatLng() ?: return@forEach
             current.addPolyline(
@@ -261,17 +247,21 @@ fun RevealMap(place: Place, scores: List<Score>, players: List<Player>, boardHei
         val goal = pinBitmap(context, Good.toArgb(), "⭐")
         current.addMarker(MarkerOptions().position(target).zIndex(1f).icon(BitmapDescriptorFactory.fromBitmap(goal)))
         current.setOnMapLoadedCallback {
-            val bounds = LatLngBounds.Builder().apply { points.forEach(::include) }.build()
-            val margin = with(density) { REVEAL_MARGIN.roundToPx() }
-            current.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, margin))
-            if (current.cameraPosition.zoom > MAX_REVEAL_ZOOM) {
-                current.moveCamera(CameraUpdateFactory.zoomTo(MAX_REVEAL_ZOOM))
-            }
-            // The map never zooms out to the whole world, so far-apart pins may not fit. The answer
-            // always has to show; the others are still on the board, with their lines leading off.
-            val visible = current.projection.visibleRegion.latLngBounds
-            if (!points.all(visible::contains)) current.moveCamera(CameraUpdateFactory.newLatLng(target))
+            loaded = true
+            fit()
         }
+    }
+    LaunchedEffect(current, bottom, right) {
+        with(density) { current.setPadding(0, 0, right.roundToPx(), bottom.roundToPx()) }
+        if (loaded) view.post { fit() }
+    }
+    // A phone turned on its side gives the map a new size, and the pins have to fit that.
+    DisposableEffect(view, current, place) {
+        val listener = View.OnLayoutChangeListener { _, l, t, r, b, oldL, oldT, oldR, oldB ->
+            if (loaded && (r - l != oldR - oldL || b - t != oldB - oldT)) view.post { fit() }
+        }
+        view.addOnLayoutChangeListener(listener)
+        onDispose { view.removeOnLayoutChangeListener(listener) }
     }
 }
 
