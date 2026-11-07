@@ -1,7 +1,6 @@
 # Adonde
 
-A place-guessing game for Android TV, in English, Portuguese (from Portugal), Spanish and French, played with the remote's D-pad by
-1 to 6 people on one screen. Inspired by GeoGuessr. For personal use: it's sideloaded, not on Google Play.
+A place-guessing game for Android TV, played with the remote's D-pad by 1 to 6 people on one screen. Inspired by GeoGuessr. For personal use: it's sideloaded, not on Google Play.
 
 Each round:
 
@@ -16,6 +15,25 @@ Each round:
 After the last round comes the final ranking. The fewest cumulative kilometres wins.
 
 Back pauses the game. Pressing it again on the pause screen leaves the game.
+
+## Languages
+
+The game follows the TV's language: English, Portuguese (from Portugal, also used on Brazilian Portuguese
+TVs), Spanish and French. Any other language falls back to English. The text is in
+`app/src/main/res/values*/strings.xml`, with English in `values/`. Distances use the number style of the
+language the text is in ("1,234 km" in English, "1 234 km" in Portuguese), and players without a name of
+their own are shown as "Player 1", "Jogador 1" and so on.
+
+To add a language, copy `values/strings.xml` to `values-xx/`, translate it, and add the code to
+`localeFilters` in `app/build.gradle.kts`.
+
+To try a language without changing the device's own:
+
+```bash
+adb shell cmd locale set-app-locales com.jjmluz.adonde --locales fr-FR
+```
+
+`--locales ""` goes back to following the device.
 
 ## Build and install
 
@@ -57,6 +75,9 @@ If several devices are connected, pick one with `ANDROID_SERIAL` (see `adb devic
 ```bash
 adb shell input keycombination -t 1600 KEYCODE_DPAD_CENTER KEYCODE_F12
 ```
+
+If the emulator only ever shows the "no place found" screen, it has resumed from a stale snapshot (its clock
+is days behind and hostname lookups hang). Cold-boot it with `emulator -avd <name> -no-snapshot`.
 
 ## Google Maps limits
 
