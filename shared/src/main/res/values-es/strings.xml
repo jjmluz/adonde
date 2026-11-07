@@ -45,11 +45,8 @@
     <string name="quit">Salir</string>
 
     <!-- Móviles y tabletas -->
-    <string name="tap_to_rename">Toca un nombre o un animal para cambiarlo</string>
     <string name="guess">Adivinar</string>
     <string name="confirm">Confirmar</string>
-    <string name="drag_to_look">Arrastra para mirar alrededor, pellizca para hacer zoom</string>
-    <string name="drag_map">Arrastra el mapa bajo el marcador, pellizca para hacer zoom</string>
     <string name="next_round">Siguiente ronda</string>
     <string name="retry">Reintentar</string>
     <string name="pause">Pausa</string>

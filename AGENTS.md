@@ -98,7 +98,7 @@ Assets and tools:
   Back.
 - For bigger visual changes, the user likes mockups first.
 - On the phone: the panorama and the map take the touch gestures themselves (drag, pinch). **Guess** and
-  **Confirm** are taps rather than holds. A pause button sits top-left; the buttons stay above the bottom
+  **Confirm** are taps rather than holds. The phone has no gesture or rename hints: the user took them out. A pause button sits top-left; the buttons stay above the bottom
   edge so Google's notices show. Overlays that must stop touches reaching the map use `blockTouches()`.
 
 ## Google Maps rules
