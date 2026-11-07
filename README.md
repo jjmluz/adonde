@@ -60,7 +60,9 @@ drag and pinch, then **Guess** and **Confirm**.
 It needs Xcode and its own Maps key: in the same Cloud project, enable the Maps SDK for iOS and create a key
 restricted to iOS apps with the bundle id `com.jjmluz.adonde`. Copy `ios/Config/Secrets.example.xcconfig` to
 `ios/Config/Secrets.xcconfig` and put the key in it; git ignores that file. Then open
-`ios/Adonde.xcodeproj` in Xcode and run it, or build from the command line (see `AGENTS.md`).
+`ios/Adonde.xcodeproj` in Xcode and run it, or build from the command line (see `AGENTS.md`). To run it on an iPhone, also put
+your Apple development team's id in that file (`DEVELOPMENT_TEAM`); with a free Apple ID, the first time, trust
+the developer on the phone in Settings → General → VPN & Device Management.
 
 ## Build and install
 
