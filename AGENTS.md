@@ -21,6 +21,8 @@ Guide for coding agents working on Adonde. Read `README.md` for the game's rules
   is on the user's Pixel 8 Pro (`192.168.1.131`, wireless debugging: the port changes, see `adb devices`),
   and has been tried on the `Phone_37` emulator (a Pixel 8-sized Android 37 phone, which can also be resized to a tablet with `adb shell wm size 2560x1600` and
   `wm density 320`; reset both afterwards).
+- There is also an iPhone app (`ios/`, SwiftUI), on the `ios` branch: **don't merge it into `main` until the user
+  says so**. iPad comes next; Apple TV was dropped, because Google's Maps SDK doesn't run on it.
 - The home screen is the user's own launcher (`com.jj.launcher`, `~/projects/jj-launcher`). Adonde is on its
   third row, with the banner from `res/drawable-nodpi/banner.png`.
 - The TV is in use by the family. Anything you do on it is visible.
@@ -50,6 +52,24 @@ ANDROID_SERIAL=emulator-5556 ./gradlew :mobile:installRelease                # t
   ask the user.
 - `local.properties` holds `sdk.dir` and `MAPS_API_KEY`, and is git-ignored. **Never print, paste or commit
   the key.** It reaches the manifest through `manifestPlaceholders`.
+
+The iPhone app (needs Xcode; `ios/Config/Secrets.xcconfig` holds `MAPS_API_KEY`, a separate key restricted to
+iOS apps with the bundle id `com.jjmluz.adonde`; **never print or commit it**):
+
+```bash
+cd ios && xcodebuild -project Adonde.xcodeproj -scheme Adonde -sdk iphonesimulator \
+  -destination 'platform=iOS Simulator,name=iPhone 18 Pro' -derivedDataPath build build
+```
+
+- A build phase runs `./gradlew :core:embedAndSignAppleFrameworkForXcode` to build `core` as the static
+  `AdondeCore` framework, using Android Studio's JDK when `JAVA_HOME` isn't set. Simulator builds are Apple
+  silicon only (`EXCLUDED_ARCHS` x86_64): `core` has no `iosX64` target.
+- `ios/Adonde/Localizable.xcstrings` is generated: change the Android `strings.xml` files, then run
+  `python3 -I tools/build_ios_strings.py`. Keys are the Android names; arrays become `name_0`, `name_1`, ...
+- The project uses a synchronized folder: new files in `ios/Adonde/` join the app without editing the project.
+  `places.csv`, `globe.csv` and `outfit.ttf` are referenced from `shared/`, not copied.
+- The Kotlin tests also run on the iOS simulator: `./gradlew :core:iosSimulatorArm64Test`. Kotlin/Native
+  rejects test names with commas and some other punctuation.
 
 ## Code map
 
@@ -84,6 +104,10 @@ ANDROID_SERIAL=emulator-5556 ./gradlew :mobile:installRelease                # t
 bars hidden, `configChanges` so turning the device doesn't reload the panorama) and `Screens.kt` (every screen,
 in portrait and landscape; Back via `BackHandler`).
 
+`ios/Adonde/` (the iPhone, a port of `mobile`): `GameModel.swift` (the twin of `GameViewModel`, saving the setup to
+`UserDefaults` under the Android keys), `Screens.swift`, `Maps.swift` (`GMSPanoramaView` and `GMSMapView` in
+`UIViewRepresentable`s), `Theme.swift` (palette, logo, `tr` for strings, `km`, pins), `Globe.swift`.
+
 Tests: `core/src/commonTest/kotlin/com/jjmluz/adonde/GameTest.kt` (`kotlin.test`) covers everything in `core`. They run
 on the JVM through `:core:jvmTest`, which `testDebugUnitTest` also runs. Put new rules in `Game.kt` with a test rather
 than in the view models, which can't be unit-tested.
@@ -92,7 +116,8 @@ Assets and tools:
 - `shared/src/main/assets/places.csv` ← `tools/build_places.py` (GeoNames `cities15000`).
 - `shared/src/main/assets/globe.csv` ← `tools/build_globe.py path/to/land-110m.json shared/src/main/assets/globe.csv` (world-atlas).
 - `app/src/main/res/drawable-nodpi/banner.png` and `icon.png` ← `tools/make_art.swift app/src/main/res/drawable-nodpi`
-  (uses `shared/src/main/res/font/outfit.ttf`). The phone's adaptive icon is `mobile/src/main/res/drawable/ic_launcher_pin.xml`.
+  (uses `shared/src/main/res/font/outfit.ttf`); a second argument, `ios/Adonde/Assets.xcassets/AppIcon.appiconset`,
+  also draws the iOS icon. The phone's adaptive icon is `mobile/src/main/res/drawable/ic_launcher_pin.xml`.
 - Run Python on downloaded data with `python3 -I`, from outside the download's folder. Ask before downloading.
 
 ## Design (agreed with the user)
@@ -154,5 +179,6 @@ The TV app after the split into modules was checked on the TV by the user (7 Nov
 
 - On the TV: the reveal and final screens, the "no internet" screen (disconnect the TV), and the duplicate
   avatar fix.
+- The iPhone app on a real iPhone (needs signing with the user's Apple ID), and its pinch and drag feel.
 - The mockups (a claude.ai design artifact) still show the old hold messages.
 - The translations on the reveal and final screens.

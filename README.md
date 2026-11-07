@@ -51,6 +51,17 @@ adb shell cmd locale set-app-locales com.jjmluz.adonde --locales fr-FR
 
 `--locales ""` goes back to following the device.
 
+## iPhone
+
+The `ios/` folder holds an iPhone version of the phone app, written in SwiftUI. It uses the same rules (the
+`core` module, built as a framework) and the same text, places and globe. It plays like the Android phone app:
+drag and pinch, then **Guess** and **Confirm**.
+
+It needs Xcode and its own Maps key: in the same Cloud project, enable the Maps SDK for iOS and create a key
+restricted to iOS apps with the bundle id `com.jjmluz.adonde`. Copy `ios/Config/Secrets.example.xcconfig` to
+`ios/Config/Secrets.xcconfig` and put the key in it; git ignores that file. Then open
+`ios/Adonde.xcodeproj` in Xcode and run it, or build from the command line (see `AGENTS.md`).
+
 ## Build and install
 
 Needs Android Studio's JDK (21) and the Android SDK. `local.properties` holds the SDK path and the Maps key,
@@ -103,6 +114,9 @@ Four Gradle modules:
   - `Screens.kt`: the TV's screens.
 - `mobile`: the phone and tablet app. `Screens.kt` has its screens; the panorama and the map take touch
   gestures themselves.
+
+Outside Gradle, `ios/` is the Xcode project for the iPhone app. Its strings come from the Android ones through
+`tools/build_ios_strings.py`.
 
 ## Testing on an emulator
 
