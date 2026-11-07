@@ -29,6 +29,5 @@ dependencies {
     api("androidx.activity:activity-compose:1.13.0")
     api("androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0")
     api("com.google.android.gms:play-services-maps:20.1.0")
-
-    testImplementation("junit:junit:4.13.2")
+    api(project(":core"))
 }

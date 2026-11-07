@@ -27,17 +27,6 @@ private val COS_TILT = cos(Math.toRadians(22.0)).toFloat()
 private val Ocean = Color(0xFF15253F)
 private val Land = Color(0xFF6F8FC0)
 
-class GlobeDot(val longitude: Float, val sinLatitude: Float, val cosLatitude: Float)
-
-/** Parses the lines of assets/globe.csv: latitude, longitude. */
-fun parseGlobe(lines: Sequence<String>): List<GlobeDot> = lines
-    .filter { it.isNotBlank() }
-    .map { line ->
-        val (lat, lng) = line.split(",").map { Math.toRadians(it.toDouble()).toFloat() }
-        GlobeDot(lng, sin(lat), cos(lat))
-    }
-    .toList()
-
 /** The Earth turning west to east, with the far side hidden and the near side brightest. */
 @Composable
 fun Globe(dots: List<GlobeDot>, modifier: Modifier = Modifier) {

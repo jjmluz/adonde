@@ -88,11 +88,12 @@ wireless debugging (Developer options), whose port changes; `adb devices` shows 
 
 ## Layout
 
-Three Gradle modules:
+Four Gradle modules:
 
-- `shared`: what both apps use. The text in every language, the places, the globe and the logo font.
-  - `Game.kt`: the rules, with no Android code. Tested in `GameTest.kt`.
-  - `Places.kt`: picks where to look for a panorama. Also tested in `GameTest.kt`.
+- `core`: the rules, in Kotlin Multiplatform so the iOS app can use them too. Tested in `GameTest.kt`.
+  - `Game.kt`: players, rounds, turn order, distances.
+  - `Places.kt`: picks where to look for a panorama.
+- `shared`: what both Android apps use. The text in every language, the places, the globe and the logo font.
   - `GameViewModel.kt`: the game's state and flow.
   - `Maps.kt`: the Street View panorama and the Google maps.
   - `Theme.kt`: the colours, the logo, avatars and scoreboard rows.
