@@ -53,6 +53,8 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -170,8 +172,8 @@ private fun SetupScreen(viewModel: GameViewModel) {
         verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically),
     ) {
         Logo(50.sp, Modifier.padding(bottom = 8.dp))
-        Stepper("Rondas", viewModel.rounds, viewModel.selectedRow == ROUNDS_ROW)
-        Stepper("Jogadores", viewModel.playerCount, viewModel.selectedRow == PLAYERS_ROW)
+        Stepper(stringResource(R.string.rounds), viewModel.rounds, viewModel.selectedRow == ROUNDS_ROW)
+        Stepper(stringResource(R.string.players), viewModel.playerCount, viewModel.selectedRow == PLAYERS_ROW)
         viewModel.players.take(viewModel.playerCount).forEachIndexed { index, player ->
             PlayerRow(index, player, viewModel.selectedRow == FIRST_PLAYER_ROW + index)
         }
@@ -179,7 +181,7 @@ private fun SetupScreen(viewModel: GameViewModel) {
         val selected = viewModel.selectedRow == viewModel.startRow
         SetupRow(selected, if (selected) Accent else Card) {
             Label(
-                text = "Começar",
+                text = stringResource(R.string.start),
                 size = 22.sp,
                 color = if (selected) Background else Foreground,
                 weight = FontWeight.Bold,
@@ -187,7 +189,7 @@ private fun SetupScreen(viewModel: GameViewModel) {
             )
         }
     }
-    viewModel.editingName?.let { NameDialog(viewModel.players[it].name, viewModel::onNameTyped) }
+    viewModel.editingName?.let { NameDialog(nameOf(viewModel.players[it], it), viewModel::onNameTyped) }
 }
 
 @Composable
@@ -206,9 +208,9 @@ private fun PlayerRow(index: Int, player: Player, selected: Boolean) {
         Avatar(player.avatar, index, 32.dp, Modifier.padding(horizontal = 6.dp))
         if (selected) Label("▶", 16.sp, Accent)
         Spacer(Modifier.width(10.dp))
-        Label(player.name, 20.sp, Foreground)
+        Label(nameOf(player, index), 20.sp, Foreground)
         Spacer(Modifier.weight(1f))
-        if (selected) Label("OK muda o nome", 15.sp, Muted)
+        if (selected) Label(stringResource(R.string.rename), 15.sp, Muted)
     }
 }
 
@@ -245,9 +247,9 @@ private fun NameDialog(name: String, onDone: (String) -> Unit) {
             addView(input)
         }
         val dialog = AlertDialog.Builder(context)
-            .setTitle("Nome do jogador")
+            .setTitle(R.string.player_name)
             .setView(frame)
-            .setPositiveButton("OK") { _, _ -> onDone(input.text.toString()) }
+            .setPositiveButton(android.R.string.ok) { _, _ -> onDone(input.text.toString()) }
             .setOnCancelListener { onDone(name) }
             .create()
         input.setOnEditorActionListener { _, action, _ ->
@@ -272,20 +274,20 @@ private fun ExploreScreen(viewModel: GameViewModel) {
         if (viewModel.spot == null) {
             Message(Modifier.background(Background)) {
                 if (viewModel.searchFailed) {
-                    Label("Não foi possível encontrar um local", 36.sp, Foreground, FontWeight.Bold)
-                    Label("Confirma a ligação à Internet", 24.sp, Muted)
-                    Label("Carrega em OK para tentar outra vez", 28.sp, Accent, FontWeight.Bold)
+                    Label(stringResource(R.string.no_place), 36.sp, Foreground, FontWeight.Bold)
+                    Label(stringResource(R.string.check_internet), 24.sp, Muted)
+                    Label(stringResource(R.string.try_again), 28.sp, Accent, FontWeight.Bold)
                 } else {
                     Globe(viewModel.globe, Modifier.padding(bottom = 16.dp).size(300.dp))
-                    Label("A procurar um local…", 30.sp, Foreground, FontWeight.Bold)
+                    Label(stringResource(R.string.searching), 30.sp, Foreground, FontWeight.Bold)
                 }
             }
         } else {
             ControlHint(
                 viewModel = viewModel,
-                move = "Olhar em volta",
-                hold = "Manter premido para adivinhar",
-                holding = "Continuar a premir para adivinhar",
+                move = stringResource(R.string.look_around),
+                hold = stringResource(R.string.hold_to_guess),
+                holding = stringResource(R.string.holding_to_guess),
             )
         }
     }
@@ -308,13 +310,13 @@ private fun GuessScreen(viewModel: GameViewModel) {
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Avatar(player.avatar, index, 34.dp)
-            Label("Vez de ${player.name}", 22.sp, Foreground, FontWeight.Bold)
+            Label(stringResource(R.string.turn, nameOf(player, index)), 22.sp, Foreground, FontWeight.Bold)
         }
         ControlHint(
             viewModel = viewModel,
-            move = "Mover o mapa",
-            hold = "Manter premido para confirmar",
-            holding = "Continuar a premir para confirmar",
+            move = stringResource(R.string.move_map),
+            hold = stringResource(R.string.hold_to_confirm),
+            holding = stringResource(R.string.holding_to_confirm),
         )
     }
 }
@@ -336,7 +338,7 @@ private fun BoxScope.ControlHint(viewModel: GameViewModel, move: String, hold: S
                 .background(Scrim, TabShape)
                 .padding(horizontal = TAB_FLARE + 12.dp, vertical = 4.dp),
         ) {
-            Label("Ronda ${viewModel.round} de ${viewModel.rounds}", 14.sp, Foreground, FontWeight.Bold)
+            Label(stringResource(R.string.round_of, viewModel.round, viewModel.rounds), 14.sp, Foreground, FontWeight.Bold)
         }
     }
 }
@@ -384,7 +386,7 @@ private fun HintPill(viewModel: GameViewModel, move: String, hold: String, holdi
                 Label(move, 14.sp, Foreground, FontWeight.Bold)
                 Label("·", 14.sp, Muted, modifier = Modifier.padding(horizontal = 4.dp))
                 DpadIcon(upDown = true)
-                Label("Zoom", 14.sp, Accent, FontWeight.Bold)
+                Label(stringResource(R.string.zoom), 14.sp, Accent, FontWeight.Bold)
             } else {
                 DpadIcon(upDown = true, sides = true)
                 Label(move, 14.sp, Foreground, FontWeight.Bold)
@@ -392,7 +394,7 @@ private fun HintPill(viewModel: GameViewModel, move: String, hold: String, holdi
             Label("·", 14.sp, Muted, modifier = Modifier.padding(horizontal = 4.dp))
             DpadIcon(centre = true)
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                Label(if (zooming) "Sair do zoom" else "Zoom", 14.sp, Foreground, FontWeight.Bold)
+                Label(stringResource(if (zooming) R.string.exit_zoom else R.string.zoom), 14.sp, Foreground, FontWeight.Bold)
                 Label("/ $hold", 14.sp, Foreground)
             }
         }
@@ -483,10 +485,10 @@ private fun RevealScreen(viewModel: GameViewModel) {
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Label("Ronda ${viewModel.round} de ${viewModel.rounds}", 20.sp, Foreground, FontWeight.Bold)
+                Label(stringResource(R.string.round_of, viewModel.round, viewModel.rounds), 20.sp, Foreground, FontWeight.Bold)
                 Spacer(Modifier.weight(1f))
                 Label(
-                    text = if (viewModel.isLastRound) "OK para ver o resultado final" else "OK para a próxima ronda",
+                    text = stringResource(if (viewModel.isLastRound) R.string.to_final else R.string.to_next_round),
                     size = 18.sp,
                     color = Accent,
                     weight = FontWeight.Bold,
@@ -498,8 +500,8 @@ private fun RevealScreen(viewModel: GameViewModel) {
                         ScoreRow(
                             score = score,
                             player = viewModel.players[score.player],
-                            main = formatKm(score.roundKm),
-                            detail = "Total ${formatKm(score.totalKm)}",
+                            main = km(score.roundKm),
+                            detail = stringResource(R.string.total, km(score.totalKm)),
                             modifier = Modifier.weight(1f),
                         )
                     }
@@ -521,7 +523,7 @@ private fun ScoreRow(score: Score, player: Player, main: String, detail: String,
     ) {
         Avatar(player.avatar, score.player, 36.dp)
         Column(Modifier.weight(1f)) {
-            Name(player.name)
+            Name(nameOf(player, score.player))
             Label(detail, 13.sp, Muted)
         }
         Label(main, 18.sp, Foreground, FontWeight.Bold)
@@ -542,18 +544,20 @@ private fun Name(name: String) {
 private fun FinalScreen(viewModel: GameViewModel) {
     val standings = viewModel.standings
     Message {
-        Label("Resultado final", 26.sp, Muted, FontWeight.Bold)
+        Label(stringResource(R.string.final_result), 26.sp, Muted, FontWeight.Bold)
         if (standings.size > 1) {
-            Label("${viewModel.players[standings.first().player].name} ganhou!", 36.sp, Accent, FontWeight.Bold)
+            val winner = standings.first().player
+            Label(stringResource(R.string.wins, nameOf(viewModel.players[winner], winner)), 36.sp, Accent, FontWeight.Bold)
         }
+        val places = stringArrayResource(R.array.places)
         Column(Modifier.width(520.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             standings.forEachIndexed { position, score ->
-                ScoreRow(score, viewModel.players[score.player], formatKm(score.totalKm), "${position + 1}.º lugar")
+                ScoreRow(score, viewModel.players[score.player], km(score.totalKm), places[position])
             }
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             DpadIcon(centre = true, iconSize = 34.dp)
-            Label("Voltar ao início", 22.sp, Foreground, FontWeight.Bold)
+            Label(stringResource(R.string.back_to_start), 22.sp, Foreground, FontWeight.Bold)
         }
     }
 }
@@ -569,10 +573,10 @@ private fun PausedOverlay() {
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
             DpadIcon(centre = true, iconSize = 44.dp)
-            Label("Continuar", 28.sp, Foreground, FontWeight.Bold)
+            Label(stringResource(R.string.resume), 28.sp, Foreground, FontWeight.Bold)
             Spacer(Modifier.width(40.dp))
             BackIcon(44.dp)
-            Label("Sair", 28.sp, Foreground, FontWeight.Bold)
+            Label(stringResource(R.string.quit), 28.sp, Foreground, FontWeight.Bold)
         }
     }
 }
@@ -600,6 +604,15 @@ private fun Avatar(avatar: Int, colorIndex: Int, size: Dp, modifier: Modifier = 
         BasicText(AVATARS[avatar], style = TextStyle(fontSize = (size.value * 0.55f).sp))
     }
 }
+
+/** The player's name, or "Player N" in the TV's language when they haven't chosen one. */
+@Composable
+private fun nameOf(player: Player, index: Int): String =
+    player.name.ifEmpty { stringResource(R.string.default_player, index + 1) }
+
+@Composable
+private fun km(km: Double): String =
+    formatKm(km, stringResource(R.string.decimal_mark), stringResource(R.string.group_mark))
 
 @Composable
 private fun Message(modifier: Modifier = Modifier, content: @Composable () -> Unit) {

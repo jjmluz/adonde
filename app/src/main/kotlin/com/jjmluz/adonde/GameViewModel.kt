@@ -58,7 +58,8 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         private set
 
     val players = mutableStateListOf<Player>().apply {
-        repeat(MAX_PLAYERS) { add(Player(prefs.getString("name$it", null) ?: "Jogador ${it + 1}", prefs.getInt("avatar$it", it))) }
+        // An empty name is the default, "Player N" in whatever language the TV is in.
+        repeat(MAX_PLAYERS) { add(Player(savedName(prefs.getString("name$it", null), it), prefs.getInt("avatar$it", it))) }
     }
     var playerCount by mutableIntStateOf(prefs.getInt("players", DEFAULT_PLAYERS))
         private set

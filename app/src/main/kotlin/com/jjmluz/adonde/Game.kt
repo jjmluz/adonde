@@ -43,12 +43,32 @@ fun distanceKm(a: Place, b: Place): Double {
     return 2 * EARTH_RADIUS_KM * asin(min(1.0, sqrt(h)))
 }
 
-/** "12,3 km" under 100 km, then whole kilometres: "1 234 km". */
-fun formatKm(km: Double): String {
+/**
+ * One decimal under 100 km, then whole kilometres, with the marks of the game's language: "12,3 km" and
+ * "1 234 km" in Portuguese, "12.3 km" and "1,234 km" in English. The marks come from the strings rather
+ * than the system locale, so the numbers match the language the text is in when it falls back to English.
+ */
+fun formatKm(km: Double, decimalMark: String, groupMark: String): String {
     val decimals = if (km < 100) 1 else 0
     val digits = String.format(Locale.ROOT, "%,.${decimals}f", km)
-    return digits.replace(",", " ").replace(".", ",") + " km"
+    return buildString {
+        digits.forEach {
+            when (it) {
+                ',' -> append(groupMark)
+                '.' -> append(decimalMark)
+                else -> append(it)
+            }
+        }
+        append(" km")
+    }
 }
+
+/**
+ * The saved name of the player at [index], or "" for the default, which is shown in the current language.
+ * "Jogador N" is what older versions saved for the default, in Portuguese only.
+ */
+fun savedName(saved: String?, index: Int): String =
+    if (saved == null || saved == "Jogador ${index + 1}") "" else saved
 
 /** One player's line on a scoreboard. */
 data class Score(val player: Int, val guess: Place?, val roundKm: Double, val totalKm: Double)

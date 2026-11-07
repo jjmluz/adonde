@@ -1,3 +1,54 @@
 <resources>
-    <string name="app_name">Adonde</string>
+    <!-- English is the default: the TV gets it when its language has no translation of its own. -->
+    <string name="app_name" translatable="false">Adonde</string>
+
+    <!-- Numbers: 12.3 km, 1,234 km -->
+    <string name="decimal_mark">.</string>
+    <string name="group_mark">,</string>
+
+    <!-- Setup -->
+    <string name="rounds">Rounds</string>
+    <string name="players">Players</string>
+    <string name="default_player">Player %d</string>
+    <string name="rename">OK changes the name</string>
+    <string name="player_name">Player name</string>
+    <string name="start">Start</string>
+
+    <!-- Search -->
+    <string name="searching">Looking for a place…</string>
+    <string name="no_place">Couldn’t find a place</string>
+    <string name="check_internet">Check the internet connection</string>
+    <string name="try_again">Press OK to try again</string>
+
+    <!-- Playing -->
+    <string name="round_of">Round %1$d of %2$d</string>
+    <string name="look_around">Look around</string>
+    <string name="hold_to_guess">Hold to guess</string>
+    <string name="holding_to_guess">Keep holding to guess</string>
+    <string name="turn">%s’s turn</string>
+    <string name="move_map">Move the map</string>
+    <string name="hold_to_confirm">Hold to confirm</string>
+    <string name="holding_to_confirm">Keep holding to confirm</string>
+    <string name="zoom">Zoom</string>
+    <string name="exit_zoom">Exit zoom</string>
+
+    <!-- Results -->
+    <string name="to_next_round">OK for the next round</string>
+    <string name="to_final">OK for the final results</string>
+    <string name="total">Total %s</string>
+    <string name="final_result">Final results</string>
+    <string name="wins">%s wins!</string>
+    <string-array name="places">
+        <item>1st place</item>
+        <item>2nd place</item>
+        <item>3rd place</item>
+        <item>4th place</item>
+        <item>5th place</item>
+        <item>6th place</item>
+    </string-array>
+    <string name="back_to_start">Back to start</string>
+
+    <!-- Pause -->
+    <string name="resume">Resume</string>
+    <string name="quit">Quit</string>
 </resources>

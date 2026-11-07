@@ -1,0 +1,48 @@
+<resources>
+    <!-- Portuguese from Portugal. Brazilian Portuguese TVs get these too, which beats falling back to English. -->
+
+    <!-- Números: 12,3 km, 1 234 km -->
+    <string name="decimal_mark">,</string>
+    <string name="group_mark">" "</string>
+
+    <string name="rounds">Rondas</string>
+    <string name="players">Jogadores</string>
+    <string name="default_player">Jogador %d</string>
+    <string name="rename">OK muda o nome</string>
+    <string name="player_name">Nome do jogador</string>
+    <string name="start">Começar</string>
+
+    <string name="searching">A procurar um local…</string>
+    <string name="no_place">Não foi possível encontrar um local</string>
+    <string name="check_internet">Confirma a ligação à Internet</string>
+    <string name="try_again">Carrega em OK para tentar outra vez</string>
+
+    <string name="round_of">Ronda %1$d de %2$d</string>
+    <string name="look_around">Olhar em volta</string>
+    <string name="hold_to_guess">Manter premido para adivinhar</string>
+    <string name="holding_to_guess">Continuar a premir para adivinhar</string>
+    <string name="turn">Vez de %s</string>
+    <string name="move_map">Mover o mapa</string>
+    <string name="hold_to_confirm">Manter premido para confirmar</string>
+    <string name="holding_to_confirm">Continuar a premir para confirmar</string>
+    <string name="zoom">Zoom</string>
+    <string name="exit_zoom">Sair do zoom</string>
+
+    <string name="to_next_round">OK para a próxima ronda</string>
+    <string name="to_final">OK para ver o resultado final</string>
+    <string name="total">Total %s</string>
+    <string name="final_result">Resultado final</string>
+    <string name="wins">%s ganhou!</string>
+    <string-array name="places">
+        <item>1.º lugar</item>
+        <item>2.º lugar</item>
+        <item>3.º lugar</item>
+        <item>4.º lugar</item>
+        <item>5.º lugar</item>
+        <item>6.º lugar</item>
+    </string-array>
+    <string name="back_to_start">Voltar ao início</string>
+
+    <string name="resume">Continuar</string>
+    <string name="quit">Sair</string>
+</resources>
