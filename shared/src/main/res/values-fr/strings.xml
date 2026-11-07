@@ -43,4 +43,11 @@
 
     <string name="resume">Reprendre</string>
     <string name="quit">Quitter</string>
+
+    <!-- Téléphones et tablettes -->
+    <string name="guess">Deviner</string>
+    <string name="confirm">Confirmer</string>
+    <string name="next_round">Manche suivante</string>
+    <string name="retry">Réessayer</string>
+    <string name="pause">Pause</string>
 </resources>
