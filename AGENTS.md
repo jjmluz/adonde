@@ -89,6 +89,9 @@ Assets and tools:
   because the command needs two). A real remote's key repeats differ, so the user checks holds by hand.
 - The emulator (`GoogleTV_34`) is fine for layout, but its network can't be cut, so the "no internet" screen
   can only be tested on the TV.
+- If the emulator always shows "no place found", it has resumed from a stale snapshot: its clock is days
+  behind (`adb shell date`) and hostname lookups hang. Cold-boot it:
+  `$SDK/emulator/emulator -avd GoogleTV_34 -no-snapshot`.
 - Performance: `adb shell am start -W -n com.jjmluz.adonde/.MainActivity` for start time,
   `dumpsys gfxinfo com.jjmluz.adonde` for frames.
 - **When the user says "install, don't test", build and install only.**
@@ -107,5 +110,4 @@ Assets and tools:
 - On the TV: the reveal and final screens, the "no internet" screen (disconnect the TV), and the duplicate
   avatar fix.
 - The mockups (a claude.ai design artifact) still show the old hold messages.
-- The translations on the playing, reveal and final screens: the emulator can't load Street View, so only
-  the setup, search, "no internet" and pause screens were checked in English, Spanish and French.
+- The translations on the reveal and final screens.
