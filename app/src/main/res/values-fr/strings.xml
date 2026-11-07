@@ -1,0 +1,46 @@
+<resources>
+    <!-- Nombres : 12,3 km, 1 234 km. French puts a no-break space before ! as well. -->
+    <string name="decimal_mark">,</string>
+    <string name="group_mark">" "</string>
+
+    <string name="rounds">Manches</string>
+    <string name="players">Joueurs</string>
+    <string name="default_player">Joueur %d</string>
+    <string name="rename">OK pour changer le nom</string>
+    <string name="player_name">Nom du joueur</string>
+    <string name="start">Commencer</string>
+
+    <string name="searching">Recherche d’un lieu…</string>
+    <string name="no_place">Impossible de trouver un lieu</string>
+    <string name="check_internet">Vérifiez la connexion Internet</string>
+    <string name="try_again">Appuyez sur OK pour réessayer</string>
+
+    <string name="round_of">Manche %1$d sur %2$d</string>
+    <string name="look_around">Regarder autour</string>
+    <string name="hold_to_guess">Maintenir pour deviner</string>
+    <string name="holding_to_guess">Continuer d’appuyer pour deviner</string>
+    <string name="turn">Au tour de %s</string>
+    <string name="move_map">Déplacer la carte</string>
+    <string name="hold_to_confirm">Maintenir pour confirmer</string>
+    <string name="holding_to_confirm">Continuer d’appuyer pour confirmer</string>
+    <string name="zoom">Zoom</string>
+    <string name="exit_zoom">Quitter le zoom</string>
+
+    <string name="to_next_round">OK pour la manche suivante</string>
+    <string name="to_final">OK pour voir le résultat final</string>
+    <string name="total">Total %s</string>
+    <string name="final_result">Résultat final</string>
+    <string name="wins">%s a gagné !</string>
+    <string-array name="places">
+        <item>1re place</item>
+        <item>2e place</item>
+        <item>3e place</item>
+        <item>4e place</item>
+        <item>5e place</item>
+        <item>6e place</item>
+    </string-array>
+    <string name="back_to_start">Retour à l’accueil</string>
+
+    <string name="resume">Reprendre</string>
+    <string name="quit">Quitter</string>
+</resources>

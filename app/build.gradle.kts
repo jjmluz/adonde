@@ -41,6 +41,13 @@ android {
     buildFeatures {
         compose = true
     }
+
+    androidResources {
+        // Tells Android which languages the game has, so it can offer them in the app's language setting.
+        generateLocaleConfig = true
+        // Leaves out the libraries' other translations, which the game's own text doesn't have.
+        localeFilters += listOf("en", "pt", "es", "fr")
+    }
 }
 
 dependencies {

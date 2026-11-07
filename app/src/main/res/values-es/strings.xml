@@ -1,0 +1,46 @@
+<resources>
+    <!-- Números: 12,3 km, 1.234 km -->
+    <string name="decimal_mark">,</string>
+    <string name="group_mark">.</string>
+
+    <string name="rounds">Rondas</string>
+    <string name="players">Jugadores</string>
+    <string name="default_player">Jugador %d</string>
+    <string name="rename">OK cambia el nombre</string>
+    <string name="player_name">Nombre del jugador</string>
+    <string name="start">Empezar</string>
+
+    <string name="searching">Buscando un lugar…</string>
+    <string name="no_place">No se ha podido encontrar un lugar</string>
+    <string name="check_internet">Comprueba la conexión a Internet</string>
+    <string name="try_again">Pulsa OK para volver a intentarlo</string>
+
+    <string name="round_of">Ronda %1$d de %2$d</string>
+    <string name="look_around">Mirar alrededor</string>
+    <string name="hold_to_guess">Mantener pulsado para adivinar</string>
+    <string name="holding_to_guess">Seguir pulsando para adivinar</string>
+    <string name="turn">Turno de %s</string>
+    <string name="move_map">Mover el mapa</string>
+    <string name="hold_to_confirm">Mantener pulsado para confirmar</string>
+    <string name="holding_to_confirm">Seguir pulsando para confirmar</string>
+    <string name="zoom">Zoom</string>
+    <string name="exit_zoom">Salir del zoom</string>
+
+    <string name="to_next_round">OK para la siguiente ronda</string>
+    <string name="to_final">OK para ver el resultado final</string>
+    <string name="total">Total %s</string>
+    <string name="final_result">Resultado final</string>
+    <string name="wins">¡%s ha ganado!</string>
+    <string-array name="places">
+        <item>1.er puesto</item>
+        <item>2.º puesto</item>
+        <item>3.er puesto</item>
+        <item>4.º puesto</item>
+        <item>5.º puesto</item>
+        <item>6.º puesto</item>
+    </string-array>
+    <string name="back_to_start">Volver al inicio</string>
+
+    <string name="resume">Continuar</string>
+    <string name="quit">Salir</string>
+</resources>

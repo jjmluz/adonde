@@ -1,6 +1,6 @@
 # Adonde
 
-A place-guessing game for Android TV, in Portuguese from Portugal, played with the remote's D-pad by
+A place-guessing game for Android TV, in English, Portuguese (from Portugal), Spanish and French, played with the remote's D-pad by
 1 to 6 people on one screen. Inspired by GeoGuessr. For personal use: it's sideloaded, not on Google Play.
 
 Each round:

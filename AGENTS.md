@@ -6,8 +6,15 @@ Guide for coding agents working on Adonde. Read `README.md` for the game's rules
 
 - A family game for one TV: a Google TV Streamer (`kirkwood`, Android 14, 1920×1080 UI, 32-bit userspace,
   modest GPU) in a family home in Portugal, played with the remote's D-pad. Sideloaded, never on Google Play.
-- The user writes in English; **UI text is Portuguese from Portugal** (not Brazilian): "Ronda 1 de 5",
-  "Manter premido para adivinhar", "Voltar ao início". The user picks the wording; don't rephrase it unasked.
+- The user writes in English. **The game follows the TV's language**: English (`res/values`, the fallback),
+  Portuguese from Portugal (`values-pt`, also used for Brazilian), Spanish (`values-es`) and French
+  (`values-fr`). The family's TV is in Portuguese: "Ronda 1 de 5", "Manter premido para adivinhar",
+  "Voltar ao início". The user picks the Portuguese wording; don't rephrase it unasked. A new string goes in
+  all four files; a new language also goes in `localeFilters` in `app/build.gradle.kts`.
+- Number marks come from the `decimal_mark` / `group_mark` strings, not the locale, so a German TV gets
+  English text with English numbers. An empty player name means the default "Player N" in the TV's language.
+- To see another language without changing the device's:
+  `adb shell cmd locale set-app-locales com.jjmluz.adonde --locales fr-FR` (`--locales ""` resets it).
 - The home screen is the user's own launcher (`com.jj.launcher`, `~/projects/jj-launcher`). Adonde is on its
   third row, with the banner from `res/drawable-nodpi/banner.png`.
 - The TV is in use by the family. Anything you do on it is visible.
@@ -100,3 +107,5 @@ Assets and tools:
 - On the TV: the reveal and final screens, the "no internet" screen (disconnect the TV), and the duplicate
   avatar fix.
 - The mockups (a claude.ai design artifact) still show the old hold messages.
+- The translations on the playing, reveal and final screens: the emulator can't load Street View, so only
+  the setup, search, "no internet" and pause screens were checked in English, Spanish and French.

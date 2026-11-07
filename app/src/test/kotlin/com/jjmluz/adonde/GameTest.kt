@@ -49,9 +49,32 @@ class DistanceTest {
 
     @Test
     fun `formats kilometres in Portuguese`() {
-        assertEquals("12,3 km", formatKm(12.34))
-        assertEquals("274 km", formatKm(274.2))
-        assertEquals("1 235 km", formatKm(1234.6))
+        assertEquals("12,3 km", formatKm(12.34, ",", " "))
+        assertEquals("274 km", formatKm(274.2, ",", " "))
+        assertEquals("1 235 km", formatKm(1234.6, ",", " "))
+    }
+
+    @Test
+    fun `formats kilometres in English and Spanish`() {
+        assertEquals("12.3 km", formatKm(12.34, ".", ","))
+        assertEquals("12,345 km", formatKm(12345.2, ".", ","))
+        assertEquals("12.345 km", formatKm(12345.2, ",", "."))
+        assertEquals("9,9 km", formatKm(9.94, ",", "."))
+    }
+}
+
+class NameTest {
+    @Test
+    fun `an unsaved or old Portuguese default name becomes the default`() {
+        assertEquals("", savedName(null, 0))
+        assertEquals("", savedName("Jogador 3", 2))
+    }
+
+    @Test
+    fun `a chosen name is kept`() {
+        assertEquals("Sara", savedName("Sara", 0))
+        // Only the default for that seat counts.
+        assertEquals("Jogador 3", savedName("Jogador 3", 0))
     }
 }
 
