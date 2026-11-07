@@ -21,8 +21,7 @@ Guide for coding agents working on Adonde. Read `README.md` for the game's rules
   is on the user's Pixel 8 Pro (`192.168.1.131`, wireless debugging: the port changes, see `adb devices`),
   and has been tried on the `Phone_37` emulator (a Pixel 8-sized Android 37 phone, which can also be resized to a tablet with `adb shell wm size 2560x1600` and
   `wm density 320`; reset both afterwards).
-- There is also an iPhone and iPad app (`ios/`, SwiftUI), on the `ios` branch: **don't merge it into `main` until the
-  user says so**. Apple TV was dropped, because Google's Maps SDK doesn't run on it. On iPad it turns every way,
+- There is also an iPhone and iPad app (`ios/`, SwiftUI). Apple TV was dropped, because Google's Maps SDK doesn't run on it. On iPad it turns every way,
   and can share the screen with other apps; the layouts follow the window's size, like the phone app's. Check iPad
   layouts on the `iPad Air 11-inch (M4)` simulator.
 - The home screen is the user's own launcher (`com.jj.launcher`, `~/projects/jj-launcher`). Adonde is on its
