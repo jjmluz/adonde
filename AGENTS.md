@@ -61,6 +61,19 @@ cd ios && xcodebuild -project Adonde.xcodeproj -scheme Adonde -sdk iphonesimulat
   -destination 'platform=iOS Simulator,name=iPhone 18 Pro' -derivedDataPath build build
 ```
 
+On the user's iPhone ("iPhone de Joao", an iPhone 16e; `xcrun devicectl list devices` gives its id), signed by
+their free personal team, whose `DEVELOPMENT_TEAM` is also in `Secrets.xcconfig` (keep it out of the project file;
+if Xcode writes it there, move it back):
+
+```bash
+cd ios && xcodebuild -project Adonde.xcodeproj -scheme Adonde -configuration Release \
+  -destination 'id=<device id>' -derivedDataPath build -allowProvisioningUpdates build
+xcrun devicectl device install app --device <device id> build/Build/Products/Release-iphoneos/Adonde.app
+xcrun devicectl device process launch --device <device id> com.jjmluz.adonde
+```
+
+- A free team's signature lasts 7 days, after which the app won't open until it's installed again.
+
 - A build phase runs `./gradlew :core:embedAndSignAppleFrameworkForXcode` to build `core` as the static
   `AdondeCore` framework, using Android Studio's JDK when `JAVA_HOME` isn't set. Simulator builds are Apple
   silicon only (`EXCLUDED_ARCHS` x86_64): `core` has no `iosX64` target.
@@ -179,6 +192,7 @@ The TV app after the split into modules was checked on the TV by the user (7 Nov
 
 - On the TV: the reveal and final screens, the "no internet" screen (disconnect the TV), and the duplicate
   avatar fix.
-- The iPhone app on a real iPhone (needs signing with the user's Apple ID), and its pinch and drag feel.
+- The iPhone app on a real iPhone: it installs there (7 November 2026), but the game and its pinch and drag feel
+  are unchecked.
 - The mockups (a claude.ai design artifact) still show the old hold messages.
 - The translations on the reveal and final screens.
