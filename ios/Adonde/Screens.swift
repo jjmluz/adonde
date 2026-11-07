@@ -295,38 +295,43 @@ private struct RevealScreen: View {
                         players: model.players,
                         padding: UIEdgeInsets(top: 0, left: 0, bottom: side ? 0 : board.height, right: side ? board.width : 0)
                     )
-                    scoreboard(columns: columns, maxHeight: geometry.size.height * 0.6)
+                    scoreboard(columns: columns)
                         .frame(width: side ? min(340, geometry.size.width * 0.45) : nil)
                         .frame(maxWidth: side ? nil : .infinity, maxHeight: side ? .infinity : nil)
                         .background(Color.background.ignoresSafeArea(edges: side ? [.trailing, .vertical] : [.bottom, .horizontal]))
                         .onGeometryChange(for: CGSize.self, of: \.size) { board = $0 }
+                        // Only a cap: a frame with a maximum grows to it, so it goes outside the board's background.
+                        .frame(maxHeight: side ? .infinity : geometry.size.height * 0.6, alignment: .bottom)
                 }
             }
         }
     }
 
-    private func scoreboard(columns: Int, maxHeight: CGFloat) -> some View {
+    private func scoreboard(columns: Int) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             LabelText(tr("round_of", model.round, model.rounds), 18, .foreground, .bold)
-            ScrollView {
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: columns), spacing: 8) {
-                    ForEach(model.roundScores, id: \.player) { score in
-                        ScoreRow(
-                            score: score,
-                            player: model.players[Int(score.player)],
-                            main: km(score.roundKm),
-                            detail: tr("total", km(score.totalKm))
-                        )
-                    }
-                }
+            // The board is as tall as its rows, so the map gets the rest; it only scrolls when they don't fit.
+            ViewThatFits(in: .vertical) {
+                scores(columns: columns)
+                ScrollView { scores(columns: columns) }
             }
-            .scrollBounceBehavior(.basedOnSize)
-            .fixedSize(horizontal: false, vertical: true)
             ActionButton(text: tr(model.isLastRound ? "final_result" : "next_round"), action: model.next)
                 .frame(maxWidth: .infinity)
         }
         .padding(16)
-        .frame(maxHeight: maxHeight)
+    }
+
+    private func scores(columns: Int) -> some View {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: columns), spacing: 8) {
+            ForEach(model.roundScores, id: \.player) { score in
+                ScoreRow(
+                    score: score,
+                    player: model.players[Int(score.player)],
+                    main: km(score.roundKm),
+                    detail: tr("total", km(score.totalKm))
+                )
+            }
+        }
     }
 }
 
