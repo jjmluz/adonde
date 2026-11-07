@@ -35,9 +35,12 @@ class PlacePicker(seeds: List<Seed>, private val random: Random) {
         }
         val town = countries[if (index >= 0) index else countries.lastIndex].random(random).place
         val lat = (town.lat + spread()).coerceIn(-85.0, 85.0)
-        val lng = town.lng + spread() / cos(Math.toRadians(town.lat)).coerceAtLeast(0.1)
+        val lng = town.lng + spread() / cos(radians(town.lat)).coerceAtLeast(0.1)
         return Place(lat, ((lng + 540) % 360) - 180)
     }
 
     private fun spread() = random.nextDouble(-SPREAD_DEGREES, SPREAD_DEGREES)
 }
+
+/** A picker over the whole text of places.csv, for the iOS app, which can't pass a Kotlin [Random] easily. */
+fun placePicker(csv: String): PlacePicker = PlacePicker(parseSeeds(csv.lineSequence()), Random.Default)

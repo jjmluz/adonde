@@ -1,8 +1,9 @@
 package com.jjmluz.adonde
 
-import java.util.Locale
+import kotlin.math.PI
 import kotlin.math.asin
 import kotlin.math.cos
+import kotlin.math.floor
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.sin
@@ -14,6 +15,9 @@ const val MIN_PLAYERS = 1
 const val MAX_PLAYERS = 6
 
 private const val EARTH_RADIUS_KM = 6371.0088
+
+/** Degrees to radians; `Math.toRadians` is JVM-only. */
+fun radians(degrees: Double): Double = degrees * PI / 180
 
 data class Place(val lat: Double, val lng: Double)
 
@@ -36,10 +40,10 @@ fun withUniqueAvatars(players: List<Player>, count: Int, avatars: Int): List<Pla
 
 /** Great-circle distance, which is what makes guessing across the 180° meridian fair. */
 fun distanceKm(a: Place, b: Place): Double {
-    val latA = Math.toRadians(a.lat)
-    val latB = Math.toRadians(b.lat)
+    val latA = radians(a.lat)
+    val latB = radians(b.lat)
     val h = sin((latB - latA) / 2).pow(2) +
-        cos(latA) * cos(latB) * sin(Math.toRadians(b.lng - a.lng) / 2).pow(2)
+        cos(latA) * cos(latB) * sin(radians(b.lng - a.lng) / 2).pow(2)
     return 2 * EARTH_RADIUS_KM * asin(min(1.0, sqrt(h)))
 }
 
@@ -50,15 +54,16 @@ fun distanceKm(a: Place, b: Place): Double {
  */
 fun formatKm(km: Double, decimalMark: String, groupMark: String): String {
     val decimals = if (km < 100) 1 else 0
-    val digits = String.format(Locale.ROOT, "%,.${decimals}f", km)
+    val scale = if (decimals == 1) 10L else 1L
+    // Rounds half up, like the String.format this replaced (it isn't available on iOS).
+    val scaled = floor(km * scale + 0.5).toLong()
+    val whole = (scaled / scale).toString()
     return buildString {
-        digits.forEach {
-            when (it) {
-                ',' -> append(groupMark)
-                '.' -> append(decimalMark)
-                else -> append(it)
-            }
+        whole.forEachIndexed { index, digit ->
+            if (index > 0 && (whole.length - index) % 3 == 0) append(groupMark)
+            append(digit)
         }
+        if (decimals == 1) append(decimalMark).append(scaled % scale)
         append(" km")
     }
 }

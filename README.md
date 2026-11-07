@@ -51,6 +51,19 @@ adb shell cmd locale set-app-locales com.jjmluz.adonde --locales fr-FR
 
 `--locales ""` goes back to following the device.
 
+## iPhone and iPad
+
+The `ios/` folder holds an iPhone and iPad version of the phone app, written in SwiftUI. It uses the same rules (the
+`core` module, built as a framework) and the same text, places and globe. It plays like the Android phone app:
+drag and pinch, then **Guess** and **Confirm**.
+
+It needs Xcode and its own Maps key: in the same Cloud project, enable the Maps SDK for iOS and create a key
+restricted to iOS apps with the bundle id `com.jjmluz.adonde`. Copy `ios/Config/Secrets.example.xcconfig` to
+`ios/Config/Secrets.xcconfig` and put the key in it; git ignores that file. Then open
+`ios/Adonde.xcodeproj` in Xcode and run it, or build from the command line (see `AGENTS.md`). To run it on an iPhone, also put
+your Apple development team's id in that file (`DEVELOPMENT_TEAM`); with a free Apple ID, the first time, trust
+the developer on the phone in Settings → General → VPN & Device Management.
+
 ## Build and install
 
 Needs Android Studio's JDK (21) and the Android SDK. `local.properties` holds the SDK path and the Maps key,
@@ -88,11 +101,12 @@ wireless debugging (Developer options), whose port changes; `adb devices` shows 
 
 ## Layout
 
-Three Gradle modules:
+Four Gradle modules:
 
-- `shared`: what both apps use. The text in every language, the places, the globe and the logo font.
-  - `Game.kt`: the rules, with no Android code. Tested in `GameTest.kt`.
-  - `Places.kt`: picks where to look for a panorama. Also tested in `GameTest.kt`.
+- `core`: the rules, in Kotlin Multiplatform so the iOS app can use them too. Tested in `GameTest.kt`.
+  - `Game.kt`: players, rounds, turn order, distances.
+  - `Places.kt`: picks where to look for a panorama.
+- `shared`: what both Android apps use. The text in every language, the places, the globe and the logo font.
   - `GameViewModel.kt`: the game's state and flow.
   - `Maps.kt`: the Street View panorama and the Google maps.
   - `Theme.kt`: the colours, the logo, avatars and scoreboard rows.
@@ -102,6 +116,9 @@ Three Gradle modules:
   - `Screens.kt`: the TV's screens.
 - `mobile`: the phone and tablet app. `Screens.kt` has its screens; the panorama and the map take touch
   gestures themselves.
+
+Outside Gradle, `ios/` is the Xcode project for the iPhone and iPad app. Its strings come from the Android ones through
+`tools/build_ios_strings.py`.
 
 ## Testing on an emulator
 

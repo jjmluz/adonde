@@ -5,3 +5,9 @@ local.properties
 *.iml
 .kotlin/
 .DS_Store
+
+# The iOS Maps key (see ios/Config/Secrets.example.xcconfig).
+ios/Config/Secrets.xcconfig
+# Xcode per-user state and builds.
+xcuserdata/
+ios/build/

@@ -1,4 +1,5 @@
-// Draws the TV launcher banner and icon. Usage: swift tools/make_art.swift app/src/main/res/drawable-nodpi
+// Draws the TV launcher banner and icon, and the iOS app icon.
+// Usage: swift tools/make_art.swift app/src/main/res/drawable-nodpi [ios/Adonde/Assets.xcassets/AppIcon.appiconset]
 import AppKit
 
 let background = NSColor(red: 0.043, green: 0.071, blue: 0.125, alpha: 1)
@@ -23,7 +24,7 @@ func pin(height: CGFloat, tip: CGPoint) {
                                 width: radius * 0.84, height: radius * 0.84)).fill()
 }
 
-func save(_ name: String, width: Int, height: Int, draw: () -> Void) {
+func save(_ name: String, width: Int, height: Int, in folder: String = CommandLine.arguments[1], draw: () -> Void) {
     let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
                             space: CGColorSpace(name: CGColorSpace.sRGB)!,
                             bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue)!
@@ -32,7 +33,7 @@ func save(_ name: String, width: Int, height: Int, draw: () -> Void) {
     NSRect(x: 0, y: 0, width: width, height: height).fill()
     draw()
     NSGraphicsContext.current?.flushGraphics()
-    let path = CommandLine.arguments[1] + "/" + name
+    let path = folder + "/" + name
     let bitmap = NSBitmapImageRep(cgImage: context.makeImage()!)
     try! bitmap.representation(using: .png, properties: [:])!.write(to: URL(fileURLWithPath: path))
 }
@@ -56,4 +57,11 @@ save("banner.png", width: 640, height: 360) {
 
 save("icon.png", width: 360, height: 360) {
     pin(height: 268, tip: CGPoint(x: 180, y: 46))
+}
+
+// The same pin for iOS, which wants one 1024-point square and rounds its corners itself.
+if CommandLine.arguments.count > 2 {
+    save("icon.png", width: 1024, height: 1024, in: CommandLine.arguments[2]) {
+        pin(height: 268 * 1024 / 360, tip: CGPoint(x: 512, y: 46 * 1024 / 360))
+    }
 }
