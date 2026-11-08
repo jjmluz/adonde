@@ -10,6 +10,7 @@ import androidx.compose.runtime.setValue
 import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import java.time.LocalDate
 import kotlin.random.Random
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -22,7 +23,7 @@ private const val DEFAULT_PLAYERS = 2
 
 val AVATARS = listOf("🦊", "🐼", "🐸", "🦁", "🐧", "🐙", "🦉", "🐢", "🦄", "🐝", "🐬", "🐨")
 
-enum class Screen { SPLASH, SETUP, EXPLORE, GUESS, REVEAL, FINAL }
+enum class Screen { SPLASH, SETUP, EXPLORE, GUESS, REVEAL, FINAL, RECORDS }
 
 /**
  * The game's state and flow, shared by the TV and the phone. Each app drives it in its own way: the TV
@@ -36,6 +37,10 @@ open class GameViewModel(app: Application) : AndroidViewModel(app) {
     )
     val globe = parseGlobe(app.assets.open("globe.csv").bufferedReader().readLines().asSequence())
     private var game: Game? = null
+    private var keeper: RecordKeeper? = null
+    /** The country of the town the current search started from, and of the round's place once it's found. */
+    private var searchCountry = ""
+    private var spotCountry = ""
     private var searchTimeout: Job? = null
     private var searchesLeft = 0
 
@@ -83,6 +88,16 @@ open class GameViewModel(app: Application) : AndroidViewModel(app) {
     val isLastRound: Boolean
         get() = game?.isLastRound == true
 
+    /** Every game's records, saved after each round. */
+    var records by mutableStateOf(Records.decode(prefs.getString("records", null)))
+        private set
+    /** The player whose guess this round is the closest ever, if anyone's is. */
+    var roundRecord by mutableStateOf<Int?>(null)
+        private set
+    /** The records this game broke, for the final results. */
+    var brokenRecords by mutableStateOf<List<NewRecord>>(emptyList())
+        private set
+
     /** Reads the point under the pin. Set by the map while a player is guessing. */
     var pinPosition: (() -> Place)? = null
 
@@ -126,6 +141,7 @@ open class GameViewModel(app: Application) : AndroidViewModel(app) {
     fun startGame() {
         saveSetup()
         game = Game(players.take(playerCount).toList(), rounds)
+        keeper = RecordKeeper(records, players.take(playerCount).toList())
         startExploring()
     }
 
@@ -135,6 +151,7 @@ open class GameViewModel(app: Application) : AndroidViewModel(app) {
         searchTimeout?.cancel()
         if (position != null) {
             spot = position
+            spotCountry = searchCountry
             game?.startRound(position)
         } else {
             search()
@@ -161,6 +178,8 @@ open class GameViewModel(app: Application) : AndroidViewModel(app) {
         if (current.guesser == null) {
             roundScores = current.roundScores
             standings = current.standings
+            roundRecord = keeper?.addRound(roundScores, spotCountry, LocalDate.now().toEpochDay())
+            saveRecords()
             screen = Screen.REVEAL
         } else {
             showGuesser()
@@ -172,6 +191,10 @@ open class GameViewModel(app: Application) : AndroidViewModel(app) {
         val current = game ?: return
         if (screen != Screen.REVEAL) return
         if (current.isLastRound) {
+            keeper?.addGame(standings)
+            saveRecords()
+            brokenRecords = keeper?.broken.orEmpty()
+            keeper = null
             screen = Screen.FINAL
         } else {
             current.nextRound()
@@ -187,7 +210,12 @@ open class GameViewModel(app: Application) : AndroidViewModel(app) {
         paused = false
     }
 
-    /** Leaves the game, or the final results, for the title screen. */
+    /** From the title screen to the records. */
+    fun showRecords() {
+        if (screen == Screen.SETUP) screen = Screen.RECORDS
+    }
+
+    /** Leaves the game, the final results or the records for the title screen. */
     fun backToStart() {
         paused = false
         screen = Screen.SETUP
@@ -218,6 +246,7 @@ open class GameViewModel(app: Application) : AndroidViewModel(app) {
         }
         searchesLeft--
         searchNear = picker.next()
+        searchCountry = picker.country
         // The panorama stays silent if it can't reach Google, so there's no point in retrying.
         searchTimeout?.cancel()
         searchTimeout = viewModelScope.launch {
@@ -238,6 +267,11 @@ open class GameViewModel(app: Application) : AndroidViewModel(app) {
         withUniqueAvatars(players, playerCount, AVATARS.size).forEachIndexed { index, player ->
             if (players[index] != player) players[index] = player
         }
+    }
+
+    private fun saveRecords() {
+        keeper?.let { records = it.records }
+        prefs.edit { putString("records", records.encode()) }
     }
 
     private fun saveSetup() {

@@ -9,7 +9,7 @@ private let defaultPlayers = 2
 
 let avatars = ["🦊", "🐼", "🐸", "🦁", "🐧", "🐙", "🦉", "🐢", "🦄", "🐝", "🐬", "🐨"]
 
-enum Screen { case splash, setup, explore, guess, reveal, final }
+enum Screen { case splash, setup, explore, guess, reveal, final, records }
 
 /**
  The game's state and flow, the iOS twin of the Android `GameViewModel`. The rules themselves are in `core`
@@ -21,6 +21,10 @@ final class GameModel {
     @ObservationIgnored private let picker = PlacesKt.placePicker(csv: asset("places"))
     @ObservationIgnored let globe = GlobeDotsKt.parseGlobe(csv: asset("globe"))
     @ObservationIgnored private var game: Game?
+    @ObservationIgnored private var keeper: RecordKeeper?
+    /// The country of the town the current search started from, and of the round's place once it's found.
+    @ObservationIgnored private var searchCountry = ""
+    @ObservationIgnored private var spotCountry = ""
     @ObservationIgnored private var timeout: Task<Void, Never>?
     @ObservationIgnored private var searchesLeft = 0
     /// Reads the point under the pin. Set by the map while a player is guessing.
@@ -47,6 +51,12 @@ final class GameModel {
     private(set) var turn = 0
     private(set) var roundScores: [Score] = []
     private(set) var standings: [Score] = []
+    /// Every game's records, saved after each round under the Android app's key.
+    private(set) var records = Records.companion.decode(text: UserDefaults.standard.string(forKey: "records"))
+    /// The player whose guess this round is the closest ever, if anyone's is.
+    private(set) var roundRecord: Int?
+    /// The records this game broke, for the final results.
+    private(set) var brokenRecords: [NewRecord] = []
 
     var guesser: Player? { guesserIndex.map { players[$0] } }
 
@@ -102,6 +112,7 @@ final class GameModel {
     func startGame() {
         saveSetup()
         game = Game(players: Array(players.prefix(playerCount)), rounds: Int32(rounds))
+        keeper = RecordKeeper(start: records, players: Array(players.prefix(playerCount)))
         startExploring()
     }
 
@@ -111,6 +122,7 @@ final class GameModel {
         timeout?.cancel()
         if let position {
             spot = position
+            spotCountry = searchCountry
             game?.startRound(place: position)
         } else {
             search()
@@ -135,6 +147,8 @@ final class GameModel {
         if game.guesser == nil {
             roundScores = game.roundScores
             standings = game.standings
+            roundRecord = keeper?.addRound(scores: roundScores, country: spotCountry, day: today()).map { Int($0.int32Value) }
+            saveRecords()
             screen = .reveal
         } else {
             showGuesser()
@@ -145,6 +159,10 @@ final class GameModel {
     func next() {
         guard let game, screen == .reveal else { return }
         if game.isLastRound {
+            keeper?.addGame(standings: standings)
+            saveRecords()
+            brokenRecords = keeper?.broken ?? []
+            keeper = nil
             screen = .final
         } else {
             game.nextRound()
@@ -156,7 +174,12 @@ final class GameModel {
 
     func resume() { paused = false }
 
-    /// Leaves the game, or the final results, for the title screen.
+    /// From the title screen to the records.
+    func showRecords() {
+        if screen == .setup { screen = .records }
+    }
+
+    /// Leaves the game, the final results or the records for the title screen.
     func backToStart() {
         paused = false
         screen = .setup
@@ -184,6 +207,7 @@ final class GameModel {
         }
         searchesLeft -= 1
         searchNear = picker.next()
+        searchCountry = picker.country
         // The panorama may stay silent if it can't reach Google, so the search gives up after a while.
         timeout?.cancel()
         timeout = Task { [weak self] in
@@ -204,6 +228,11 @@ final class GameModel {
         if fixed != players { players = fixed }
     }
 
+    private func saveRecords() {
+        if let keeper { records = keeper.records }
+        defaults.set(records.encode(), forKey: "records")
+    }
+
     private func saveSetup() {
         defaults.set(rounds, forKey: "rounds")
         defaults.set(playerCount, forKey: "players")
@@ -212,6 +241,11 @@ final class GameModel {
             defaults.set(Int(player.avatar), forKey: "avatar\(index)")
         }
     }
+}
+
+/// Today, in days since 1 January 1970 where the device is.
+func today() -> Int64 {
+    Int64(((Date().timeIntervalSince1970 + Double(TimeZone.current.secondsFromGMT())) / 86400).rounded(.down))
 }
 
 /// The whole text of one of the shared CSV files, which the app bundles from shared/src/main/assets.

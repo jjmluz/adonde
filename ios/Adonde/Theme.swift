@@ -113,12 +113,14 @@ struct AvatarView: View {
     }
 }
 
-/// One player on a scoreboard: their avatar and name, a `detail` under the name, and `main` at the end.
+/// One player on a scoreboard: their avatar and name, a `detail` under the name, and `main` at the end. A
+/// `highlight`ed row, for a new record, has a yellow outline and a yellow `main`.
 struct ScoreRow: View {
     let score: Score
     let player: Player
     let main: String
     let detail: String
+    var highlight = false
 
     var body: some View {
         HStack(spacing: 10) {
@@ -128,11 +130,12 @@ struct ScoreRow: View {
                 LabelText(detail, 13, .muted)
             }
             Spacer(minLength: 0)
-            LabelText(main, 18, .foreground, .bold)
+            LabelText(main, 18, highlight ? .accent : .foreground, .bold)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
         .background(Color.card, in: RoundedRectangle(cornerRadius: 10))
+        .overlay { if highlight { RoundedRectangle(cornerRadius: 10).strokeBorder(Color.accent, lineWidth: 2) } }
     }
 }
 

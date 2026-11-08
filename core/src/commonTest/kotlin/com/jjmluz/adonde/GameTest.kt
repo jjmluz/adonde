@@ -251,3 +251,128 @@ class PlacePickerTest {
         seeds.forEach { seed -> assertTrue(picks.any { distanceKm(it, seed.place) < 30 }) }
     }
 }
+
+class RecordsTest {
+    private val ana = Player("Ana", 0)
+    private val rui = Player("Rui", 1)
+    private val unnamed = Player("", 2)
+
+    /** A round where each player is [kms] away, in the order of the game's players. */
+    private fun round(vararg kms: Double) =
+        kms.mapIndexed { player, km -> Score(player, LISBON, km, km) }.sortedBy { it.roundKm }
+
+    @Test
+    fun theClosestGuessEverIsReportedOnlyWhenItBeatsTheOldOne() {
+        val keeper = RecordKeeper(Records(), listOf(ana, rui))
+        assertEquals(1, keeper.addRound(round(50.0, 2.0), "PT", 100))
+        assertNull(keeper.addRound(round(3.0, 9.0), "ES", 101))
+        assertEquals(0, keeper.addRound(round(1.5, 800.0), "FR", 102))
+        assertEquals(listOf(1.5, 2.0, 3.0, 9.0, 50.0), keeper.records.closest.map { it.km })
+        assertEquals("FR", keeper.records.closest.first().country)
+    }
+
+    @Test
+    fun onlyTheFiveClosestGuessesAreKept() {
+        val keeper = RecordKeeper(Records(), listOf(ana))
+        listOf(9.0, 7.0, 5.0, 3.0, 1.0, 8.0, 2.0).forEach { keeper.addRound(round(it), "PT", 1) }
+        assertEquals(listOf(1.0, 2.0, 3.0, 5.0, 7.0), keeper.records.closest.map { it.km })
+    }
+
+    @Test
+    fun unnamedPlayersHaveNoRecords() {
+        val keeper = RecordKeeper(Records(), listOf(unnamed, ana))
+        // The unnamed player's 0.1 km doesn't count, so Ana's 20 km is the closest ever.
+        assertEquals(1, keeper.addRound(round(0.1, 20.0), "PT", 1))
+        keeper.addGame(round(0.1, 20.0))
+        assertEquals(listOf("Ana"), keeper.records.closest.map { it.holder.name })
+        assertEquals(listOf("Ana"), keeper.records.tallies.map { it.holder.name })
+        assertTrue(keeper.records.byWins.isEmpty())
+    }
+
+    @Test
+    fun winsAndCloseRoundsAddUpAcrossGames() {
+        var records = Records()
+        repeat(2) {
+            val keeper = RecordKeeper(records, listOf(ana, rui))
+            keeper.addRound(round(10.0, 99.0), "PT", 1)
+            keeper.addRound(round(100.0, 300.0), "PT", 1)
+            keeper.addGame(round(110.0, 399.0))
+            records = keeper.records
+        }
+        assertEquals(2, records.byWins.single().wins)
+        assertEquals(listOf(2, 2), records.byCloseRounds.map { it.closeRounds })
+    }
+
+    @Test
+    fun aGamePlayedAloneHasNoWinner() {
+        val keeper = RecordKeeper(Records(), listOf(ana))
+        keeper.addGame(round(5.0))
+        assertTrue(keeper.records.byWins.isEmpty())
+    }
+
+    @Test
+    fun brokenRecordsBeatTheBestFromBeforeTheGame() {
+        val before = Records(
+            closest = listOf(CloseGuess(Holder("Rui", 1, 1), 0.5, "JP", 1)),
+            tallies = listOf(Tally(Holder("Rui", 1, 1), 3, 5), Tally(Holder("Ana", 0, 0), 3, 1)),
+        )
+        val keeper = RecordKeeper(before, listOf(ana, rui))
+        keeper.addRound(round(0.2, 400.0), "PT", 2)
+        keeper.addGame(round(0.2, 400.0))
+        val broken = keeper.broken
+        assertEquals(listOf(RecordKind.CLOSEST, RecordKind.WINS), broken.map { it.kind })
+        assertEquals(listOf("Ana", "Ana"), broken.map { it.holder.name })
+        assertEquals(4.0, broken[1].value)
+    }
+
+    @Test
+    fun equallingARecordDoesNotBreakIt() {
+        val before = Records(tallies = listOf(Tally(Holder("Rui", 1, 1), 2, 0), Tally(Holder("Ana", 0, 0), 1, 0)))
+        val keeper = RecordKeeper(before, listOf(ana, rui))
+        keeper.addGame(round(1.0, 2.0))
+        assertTrue(keeper.broken.isEmpty())
+    }
+
+    @Test
+    fun namesMatchWhateverTheirCaseAndPlayersKeepTheirNewLook() {
+        val before = Records(
+            closest = listOf(CloseGuess(Holder("Ana", 0, 0), 4.0, "PT", 1)),
+            tallies = listOf(Tally(Holder("Ana", 0, 0), 1, 1)),
+        )
+        val keeper = RecordKeeper(before, listOf(rui, Player(" ana ", 7)))
+        keeper.addRound(round(500.0, 50.0), "PT", 2)
+        val tally = keeper.records.tallies.single { it.holder.name == "ana" }
+        assertEquals(Holder("ana", 7, 1), tally.holder)
+        assertEquals(2, tally.closeRounds)
+        assertEquals(Holder("ana", 7, 1), keeper.records.closest.first().holder)
+    }
+
+    @Test
+    fun recordsSurviveBeingSaved() {
+        val records = Records(
+            closest = listOf(CloseGuess(Holder("Avó\tMaria", 3, 2), 0.25, "BR", 20399)),
+            tallies = listOf(Tally(Holder("Avó Maria", 3, 2), 4, 9)),
+        )
+        val read = Records.decode(records.encode())
+        assertEquals("Avó Maria", read.closest.single().holder.name)
+        assertEquals(0.25, read.closest.single().km)
+        assertEquals(records.tallies, read.tallies)
+        assertEquals(Records(), Records.decode(null))
+        assertEquals(Records(), Records.decode("rubbish\nC\tAna\tx"))
+    }
+
+    @Test
+    fun calendarDaysCountFrom1970() {
+        assertEquals(CalendarDay(1970, 1, 1), calendarDay(0))
+        assertEquals(CalendarDay(2026, 11, 7), calendarDay(20764))
+        assertEquals(CalendarDay(2024, 2, 29), calendarDay(19782))
+        assertEquals(CalendarDay(1969, 12, 31), calendarDay(-1))
+    }
+
+    @Test
+    fun thePickerSaysWhichCountryItPicked() {
+        val picker = PlacePicker(listOf(Seed("PT", LISBON)), Random(1))
+        picker.next()
+        assertEquals("PT", picker.country)
+    }
+}

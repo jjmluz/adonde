@@ -29,6 +29,13 @@ for personal use: sideloaded, not on Google Play.
 
 After the last round comes the final ranking. **The fewest kilometres in total wins.**
 
+### Records
+
+Each device keeps the family's records: the five closest guesses ever, and how many games and rounds under 100 km
+each player has won. Only players with a name of their own get records, so a name is how the game knows who's who.
+A yellow **New record** tag marks the closest guess ever when the answer is shown, the final ranking lists the
+records the game broke, and **Records**, next to Start, shows them all.
+
 ## On the TV
 
 | Set up | Look around |
@@ -172,10 +179,12 @@ Four Gradle modules:
 - `core`: the rules, in Kotlin Multiplatform so the iOS app uses them too. Tested in `GameTest.kt`.
   - `Game.kt`: players, rounds, turn order, distances.
   - `Places.kt`: picks where to look for a panorama.
+  - `Records.kt`: the records, and which ones a game broke.
 - `shared`: what both Android apps use: the text in every language, the places, the globe and the logo font.
   - `GameViewModel.kt`: the game's state and flow.
   - `Maps.kt`: the Street View panorama and the Google maps.
   - `Theme.kt`: the colours, the logo, avatars and scoreboard rows.
+  - `RecordViews.kt`: the records' cards and rows.
 - `app`: the TV version.
   - `TvViewModel.kt`: what the remote's keys do.
   - `Controls.kt`: turning the panorama and moving the map with the D-pad.

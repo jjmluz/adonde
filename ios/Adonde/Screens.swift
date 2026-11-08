@@ -25,6 +25,7 @@ struct GameView: View {
             case .guess: GuessScreen(model: model)
             case .reveal: RevealScreen(model: model)
             case .final: FinalScreen(model: model)
+            case .records: RecordsScreen(model: model)
             }
             if model.paused { PausedOverlay(model: model) }
         }
@@ -126,7 +127,18 @@ private struct SetupScreen: View {
     }
 
     private var start: some View {
-        ActionButton(text: tr("start"), action: model.startGame).frame(maxWidth: .infinity)
+        HStack(spacing: 8) {
+            ActionButton(text: tr("start"), action: model.startGame).frame(maxWidth: .infinity)
+            Button(action: model.showRecords) {
+                Image(systemName: "trophy")
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundStyle(Color.accent)
+                    .frame(width: 56, height: 56)
+                    .background(Color.card, in: Circle())
+            }
+            .buttonStyle(PressStyle())
+            .accessibilityLabel(tr("records"))
+        }
     }
 }
 
@@ -324,14 +336,20 @@ private struct RevealScreen: View {
     private func scores(columns: Int) -> some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: columns), spacing: 8) {
             ForEach(model.roundScores, id: \.player) { score in
+                let record = Int(score.player) == model.roundRecord
                 ScoreRow(
                     score: score,
                     player: model.players[Int(score.player)],
                     main: km(score.roundKm),
-                    detail: tr("total", km(score.totalKm))
+                    detail: tr("total", km(score.totalKm)),
+                    highlight: record
                 )
+                // Hangs over the card's top edge, into the gap above it.
+                .overlay(alignment: .topTrailing) { if record { NewRecordTag().offset(x: -10, y: -11) } }
             }
         }
+        // Room for the record tag, which hangs above the first card and would be clipped when the board scrolls.
+        .padding(.top, model.roundRecord != nil ? 11 : 0)
     }
 }
 
@@ -355,6 +373,9 @@ private struct FinalScreen: View {
                             detail: tr("places_\(position)")
                         )
                     }
+                    if !model.brokenRecords.isEmpty {
+                        NewRecordsCard(records: model.brokenRecords).padding(.top, 4)
+                    }
                     ActionButton(text: tr("back_to_start"), action: model.backToStart)
                         .frame(maxWidth: .infinity)
                         .padding(.top, 8)
@@ -366,6 +387,40 @@ private struct FinalScreen: View {
         }
         .defaultScrollAnchor(.center)
         .scrollBounceBehavior(.basedOnSize)
+    }
+}
+
+private struct RecordsScreen: View {
+    let model: GameModel
+
+    var body: some View {
+        GeometryReader { geometry in
+            // Side by side when the three lists fit across, as on an iPad on its side; otherwise one under another.
+            let across = geometry.size.width >= 900
+            ScrollView {
+                VStack(spacing: 12) {
+                    HStack(spacing: 10) {
+                        Image(systemName: "trophy").font(.system(size: 24, weight: .semibold)).foregroundStyle(Color.accent)
+                        LabelText(tr("records"), 26, .foreground, .bold)
+                    }
+                    if across {
+                        HStack(alignment: .top, spacing: 12) { lists }
+                    } else {
+                        VStack(spacing: 12) { lists }.frame(maxWidth: 480)
+                    }
+                    ActionButton(text: tr("back"), primary: false, action: model.backToStart).frame(maxWidth: 480)
+                }
+                .padding(24)
+                .frame(maxWidth: .infinity, minHeight: geometry.size.height)
+            }
+            .scrollBounceBehavior(.basedOnSize)
+        }
+    }
+
+    @ViewBuilder private var lists: some View {
+        ClosestList(records: model.records).layoutPriority(1)
+        TallyList(title: tr("most_wins"), tallies: model.records.byWins) { $0.wins }
+        TallyList(title: tr("close_rounds"), tallies: model.records.byCloseRounds) { $0.closeRounds }
     }
 }
 

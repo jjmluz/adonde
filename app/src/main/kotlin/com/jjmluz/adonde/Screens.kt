@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -67,6 +68,7 @@ fun AdondeApp(viewModel: TvViewModel) {
             Screen.GUESS -> GuessScreen(viewModel)
             Screen.REVEAL -> RevealScreen(viewModel)
             Screen.FINAL -> FinalScreen(viewModel)
+            Screen.RECORDS -> RecordsScreen(viewModel)
         }
         if (viewModel.paused) PausedOverlay()
     }
@@ -99,15 +101,26 @@ private fun SetupScreen(viewModel: TvViewModel) {
             PlayerRow(index, player, viewModel.selectedRow == FIRST_PLAYER_ROW + index)
         }
         Spacer(Modifier.height(2.dp))
-        val selected = viewModel.selectedRow == viewModel.startRow
-        SetupRow(selected, if (selected) Accent else Card) {
-            Label(
-                text = stringResource(R.string.start),
-                size = 22.sp,
-                color = if (selected) Background else Foreground,
-                weight = FontWeight.Bold,
-                modifier = Modifier.fillMaxWidth(),
-            )
+        // The records share the last row with start: another row wouldn't fit with six players.
+        val onLastRow = viewModel.selectedRow == viewModel.startRow
+        val start = onLastRow && !viewModel.recordsSelected
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            SetupRow(start, if (start) Accent else Card, Modifier.weight(1f)) {
+                Label(
+                    text = stringResource(R.string.start),
+                    size = 22.sp,
+                    color = if (start) Background else Foreground,
+                    weight = FontWeight.Bold,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            SetupRow(onLastRow && viewModel.recordsSelected, modifier = Modifier.width(190.dp)) {
+                Spacer(Modifier.weight(1f))
+                TrophyIcon(20.dp)
+                Spacer(Modifier.width(8.dp))
+                Label(stringResource(R.string.records), 20.sp, Foreground, FontWeight.Bold)
+                Spacer(Modifier.weight(1f))
+            }
         }
     }
     viewModel.editingName?.let { NameDialog(nameOf(viewModel.players[it], it), viewModel::onNameTyped) }
@@ -136,11 +149,15 @@ private fun PlayerRow(index: Int, player: Player, selected: Boolean) {
 }
 
 @Composable
-private fun SetupRow(selected: Boolean, color: Color = Card, content: @Composable RowScope.() -> Unit) {
+private fun SetupRow(
+    selected: Boolean,
+    color: Color = Card,
+    modifier: Modifier = Modifier.fillMaxWidth(),
+    content: @Composable RowScope.() -> Unit,
+) {
     val shape = RoundedCornerShape(10.dp)
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
             .height(40.dp)
             .clip(shape)
             .background(color)
@@ -380,13 +397,18 @@ private fun RevealScreen(viewModel: TvViewModel) {
             rows.forEach { row ->
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     row.forEach { score ->
-                        ScoreRow(
-                            score = score,
-                            player = viewModel.players[score.player],
-                            main = km(score.roundKm),
-                            detail = stringResource(R.string.total, km(score.totalKm)),
-                            modifier = Modifier.weight(1f),
-                        )
+                        val record = score.player == viewModel.roundRecord
+                        Box(Modifier.weight(1f)) {
+                            ScoreRow(
+                                score = score,
+                                player = viewModel.players[score.player],
+                                main = km(score.roundKm),
+                                detail = stringResource(R.string.total, km(score.totalKm)),
+                                highlight = record,
+                            )
+                            // Hangs over the card's top edge, into the gap above it.
+                            if (record) NewRecordTag(Modifier.align(Alignment.TopEnd).offset(x = (-10).dp, y = (-11).dp))
+                        }
                     }
                 }
             }
@@ -404,14 +426,43 @@ private fun FinalScreen(viewModel: TvViewModel) {
             Label(stringResource(R.string.wins, nameOf(viewModel.players[winner], winner)), 36.sp, Accent, FontWeight.Bold)
         }
         val places = stringArrayResource(R.array.places)
-        Column(Modifier.width(520.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            standings.forEachIndexed { position, score ->
-                ScoreRow(score, viewModel.players[score.player], km(score.totalKm), places[position])
+        // The new records go beside the ranking rather than under it, which wouldn't fit with six players.
+        val broken = viewModel.brokenRecords
+        Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+            Column(Modifier.width(if (broken.isEmpty()) 520.dp else 460.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                standings.forEachIndexed { position, score ->
+                    ScoreRow(score, viewModel.players[score.player], km(score.totalKm), places[position])
+                }
             }
+            if (broken.isNotEmpty()) NewRecordsCard(broken, Modifier.width(360.dp))
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             DpadIcon(centre = true, iconSize = 34.dp)
             Label(stringResource(R.string.back_to_start), 22.sp, Foreground, FontWeight.Bold)
+        }
+    }
+}
+
+@Composable
+private fun RecordsScreen(viewModel: TvViewModel) {
+    val records = viewModel.records
+    Column(
+        modifier = Modifier.fillMaxSize().padding(horizontal = 48.dp, vertical = 27.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            TrophyIcon(30.dp)
+            Label(stringResource(R.string.records), 30.sp, Foreground, FontWeight.Bold)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            ClosestList(records, Modifier.weight(1.45f))
+            TallyList(stringResource(R.string.most_wins), records.byWins, Tally::wins, Modifier.weight(1f))
+            TallyList(stringResource(R.string.close_rounds), records.byCloseRounds, Tally::closeRounds, Modifier.weight(1f))
+        }
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            BackIcon(30.dp)
+            Label(stringResource(R.string.back), 20.sp, Foreground, FontWeight.Bold)
         }
     }
 }

@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -81,6 +82,12 @@ import com.jjmluz.adonde.MIN_ROUNDS
 import com.jjmluz.adonde.Message
 import com.jjmluz.adonde.Muted
 import com.jjmluz.adonde.Name
+import com.jjmluz.adonde.NewRecordTag
+import com.jjmluz.adonde.NewRecordsCard
+import com.jjmluz.adonde.ClosestList
+import com.jjmluz.adonde.Tally
+import com.jjmluz.adonde.TallyList
+import com.jjmluz.adonde.TrophyIcon
 import com.jjmluz.adonde.NameDialog
 import com.jjmluz.adonde.Panorama
 import com.jjmluz.adonde.Player
@@ -114,6 +121,7 @@ fun MobileApp(viewModel: GameViewModel) {
             Screen.GUESS -> GuessScreen(viewModel)
             Screen.REVEAL -> RevealScreen(viewModel)
             Screen.FINAL -> FinalScreen(viewModel)
+            Screen.RECORDS -> RecordsScreen(viewModel)
         }
         if (viewModel.paused) PausedOverlay(viewModel)
     }
@@ -121,7 +129,7 @@ fun MobileApp(viewModel: GameViewModel) {
     BackHandler(enabled = viewModel.screen != Screen.SPLASH && viewModel.screen != Screen.SETUP) {
         when {
             viewModel.paused -> viewModel.resume()
-            viewModel.screen == Screen.FINAL -> viewModel.backToStart()
+            viewModel.screen == Screen.FINAL || viewModel.screen == Screen.RECORDS -> viewModel.backToStart()
             else -> viewModel.pause()
         }
     }
@@ -204,7 +212,19 @@ private fun ColumnScope.PlayerList(viewModel: GameViewModel) {
 
 @Composable
 private fun StartButton(viewModel: GameViewModel) {
-    ActionButton(stringResource(R.string.start), Modifier.fillMaxWidth(), onClick = viewModel::startGame)
+    val records = stringResource(R.string.records)
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        ActionButton(stringResource(R.string.start), Modifier.weight(1f), onClick = viewModel::startGame)
+        Box(
+            modifier = Modifier
+                .size(56.dp)
+                .clip(CircleShape)
+                .background(Card)
+                .clickable(role = Role.Button, onClick = viewModel::showRecords)
+                .semantics { contentDescription = records },
+            contentAlignment = Alignment.Center,
+        ) { TrophyIcon(26.dp) }
+    }
 }
 
 @Composable
@@ -367,19 +387,28 @@ private fun RevealScreen(viewModel: GameViewModel) {
         ) {
             Label(stringResource(R.string.round_of, viewModel.round, viewModel.rounds), 18.sp, Foreground, FontWeight.Bold)
             Column(
-                modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
+                modifier = Modifier
+                    .weight(1f, fill = false)
+                    .verticalScroll(rememberScrollState())
+                    // Room for the record tag, which hangs above the first card and would be clipped by the scrolling.
+                    .padding(top = if (viewModel.roundRecord != null) 11.dp else 0.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 viewModel.roundScores.chunked(columns).forEach { row ->
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         row.forEach { score ->
-                            ScoreRow(
-                                score = score,
-                                player = viewModel.players[score.player],
-                                main = km(score.roundKm),
-                                detail = stringResource(R.string.total, km(score.totalKm)),
-                                modifier = Modifier.weight(1f),
-                            )
+                            val record = score.player == viewModel.roundRecord
+                            Box(Modifier.weight(1f)) {
+                                ScoreRow(
+                                    score = score,
+                                    player = viewModel.players[score.player],
+                                    main = km(score.roundKm),
+                                    detail = stringResource(R.string.total, km(score.totalKm)),
+                                    highlight = record,
+                                )
+                                // Hangs over the card's top edge, into the gap above it.
+                                if (record) NewRecordTag(Modifier.align(Alignment.TopEnd).offset(x = (-10).dp, y = (-11).dp))
+                            }
                         }
                         // Keeps the last row's cards as wide as the others.
                         repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
@@ -417,8 +446,47 @@ private fun FinalScreen(viewModel: GameViewModel) {
             standings.forEachIndexed { position, score ->
                 ScoreRow(score, viewModel.players[score.player], km(score.totalKm), places[position])
             }
+            if (viewModel.brokenRecords.isNotEmpty()) {
+                Spacer(Modifier.height(4.dp))
+                NewRecordsCard(viewModel.brokenRecords, Modifier.fillMaxWidth())
+            }
             Spacer(Modifier.height(8.dp))
             ActionButton(stringResource(R.string.back_to_start), Modifier.fillMaxWidth(), onClick = viewModel::backToStart)
+        }
+    }
+}
+
+@Composable
+private fun RecordsScreen(viewModel: GameViewModel) {
+    val records = viewModel.records
+    BoxWithConstraints(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
+        // Side by side when the three lists fit across, as on a tablet on its side; otherwise one under another.
+        val across = maxWidth >= 900.dp
+        Column(
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                TrophyIcon(28.dp)
+                Label(stringResource(R.string.records), 26.sp, Foreground, FontWeight.Bold)
+            }
+            val wins = stringResource(R.string.most_wins)
+            val close = stringResource(R.string.close_rounds)
+            if (across) {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    ClosestList(records, Modifier.weight(1.45f))
+                    TallyList(wins, records.byWins, Tally::wins, Modifier.weight(1f))
+                    TallyList(close, records.byCloseRounds, Tally::closeRounds, Modifier.weight(1f))
+                }
+            } else {
+                Column(Modifier.widthIn(max = 480.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    ClosestList(records, Modifier.fillMaxWidth())
+                    TallyList(wins, records.byWins, Tally::wins, Modifier.fillMaxWidth())
+                    TallyList(close, records.byCloseRounds, Tally::closeRounds, Modifier.fillMaxWidth())
+                }
+            }
+            ActionButton(stringResource(R.string.back), Modifier.widthIn(max = 480.dp).fillMaxWidth(), primary = false, onClick = viewModel::backToStart)
         }
     }
 }

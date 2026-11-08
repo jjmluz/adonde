@@ -18,7 +18,7 @@ private const val BOOST_SECONDS = 2f
 /** What the D-pad does on the two playing screens. OK switches between them. */
 enum class Control { MOVE, ZOOM }
 
-/** The rows of the title screen, in order: rounds, players, each player, then start. */
+/** The rows of the title screen, in order: rounds, players, each player, then start and the records. */
 const val ROUNDS_ROW = 0
 const val PLAYERS_ROW = 1
 const val FIRST_PLAYER_ROW = 2
@@ -30,6 +30,9 @@ class TvViewModel(app: Application) : GameViewModel(app) {
     private var heldSince = 0L
 
     var selectedRow by mutableIntStateOf(FIRST_PLAYER_ROW + playerCount)
+        private set
+    /** On the last row of the title screen, whether the records are selected rather than start. */
+    var recordsSelected by mutableStateOf(false)
         private set
     var control by mutableStateOf(Control.MOVE)
         private set
@@ -109,7 +112,7 @@ class TvViewModel(app: Application) : GameViewModel(app) {
                 if (heldKeys.isEmpty()) heldSince = SystemClock.elapsedRealtime()
                 heldKeys += keyCode
             }
-            Screen.SPLASH, Screen.REVEAL, Screen.FINAL -> Unit
+            Screen.SPLASH, Screen.REVEAL, Screen.FINAL, Screen.RECORDS -> Unit
         }
         return true
     }
@@ -127,7 +130,7 @@ class TvViewModel(app: Application) : GameViewModel(app) {
         when (selectedRow) {
             ROUNDS_ROW -> changeRounds(step)
             PLAYERS_ROW -> changePlayerCount(step)
-            startRow -> Unit
+            startRow -> recordsSelected = step > 0
             else -> changeAvatar(selectedRow - FIRST_PLAYER_ROW, step)
         }
     }
@@ -141,20 +144,20 @@ class TvViewModel(app: Application) : GameViewModel(app) {
             Screen.SPLASH -> leaveSplash()
             Screen.SETUP -> when (selectedRow) {
                 ROUNDS_ROW, PLAYERS_ROW -> Unit
-                startRow -> startGame()
+                startRow -> if (recordsSelected) showRecords() else startGame()
                 else -> editName(selectedRow - FIRST_PLAYER_ROW)
             }
             Screen.EXPLORE -> if (searchFailed) retrySearch() else ok.press(SystemClock.elapsedRealtime())
             Screen.GUESS -> ok.press(SystemClock.elapsedRealtime())
             Screen.REVEAL -> next()
-            Screen.FINAL -> backToStart()
+            Screen.FINAL, Screen.RECORDS -> backToStart()
         }
     }
 
     private fun back(): Boolean {
         when {
             screen == Screen.SPLASH || screen == Screen.SETUP -> return false
-            screen == Screen.FINAL || paused -> backToStart()
+            screen == Screen.FINAL || screen == Screen.RECORDS || paused -> backToStart()
             else -> {
                 releaseKeys()
                 pause()

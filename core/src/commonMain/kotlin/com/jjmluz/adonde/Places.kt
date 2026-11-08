@@ -27,13 +27,19 @@ class PlacePicker(seeds: List<Seed>, private val random: Random) {
     private val weights = countries.map { sqrt(it.size.toDouble()) }
     private val totalWeight = weights.sum()
 
+    /** The country code of the town the last [next] picked, for the records. */
+    var country = ""
+        private set
+
     fun next(): Place {
         var left = random.nextDouble(totalWeight)
         val index = weights.indexOfFirst { weight ->
             left -= weight
             left < 0
         }
-        val town = countries[if (index >= 0) index else countries.lastIndex].random(random).place
+        val seed = countries[if (index >= 0) index else countries.lastIndex].random(random)
+        country = seed.country
+        val town = seed.place
         val lat = (town.lat + spread()).coerceIn(-85.0, 85.0)
         val lng = town.lng + spread() / cos(radians(town.lat)).coerceAtLeast(0.1)
         return Place(lat, ((lng + 540) % 360) - 180)

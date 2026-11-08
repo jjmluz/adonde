@@ -9,6 +9,7 @@ import android.widget.EditText
 import android.widget.FrameLayout
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -148,13 +149,25 @@ fun NameDialog(name: String, onDone: (String) -> Unit) {
     }
 }
 
-/** One player on a scoreboard: their avatar and name, a [detail] under the name, and [main] at the end. */
+/**
+ * One player on a scoreboard: their avatar and name, a [detail] under the name, and [main] at the end.
+ * A [highlight]ed row, for a new record, has a yellow outline and a yellow [main].
+ */
 @Composable
-fun ScoreRow(score: Score, player: Player, main: String, detail: String, modifier: Modifier = Modifier.fillMaxWidth()) {
+fun ScoreRow(
+    score: Score,
+    player: Player,
+    main: String,
+    detail: String,
+    modifier: Modifier = Modifier.fillMaxWidth(),
+    highlight: Boolean = false,
+) {
+    val shape = RoundedCornerShape(10.dp)
     Row(
         modifier = modifier
-            .clip(RoundedCornerShape(10.dp))
+            .clip(shape)
             .background(Card)
+            .then(if (highlight) Modifier.border(2.dp, Accent, shape) else Modifier)
             .padding(horizontal = 10.dp, vertical = 5.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -164,7 +177,7 @@ fun ScoreRow(score: Score, player: Player, main: String, detail: String, modifie
             Name(nameOf(player, score.player))
             Label(detail, 13.sp, Muted)
         }
-        Label(main, 18.sp, Foreground, FontWeight.Bold)
+        Label(main, 18.sp, if (highlight) Accent else Foreground, FontWeight.Bold)
     }
 }
 

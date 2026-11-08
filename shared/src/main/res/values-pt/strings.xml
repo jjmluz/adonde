@@ -43,6 +43,33 @@
     </string-array>
     <string name="back_to_start">Voltar ao início</string>
 
+    <!-- Records -->
+    <string name="language">pt-PT</string>
+    <string name="new_record">Novo recorde</string>
+    <string name="new_records">Novos recordes</string>
+    <string name="records">Recordes</string>
+    <string name="closest_ever">Mais perto de sempre</string>
+    <string name="most_wins">Vitórias</string>
+    <string name="close_rounds">Rondas abaixo de 100 km</string>
+    <string name="no_records">Ainda nenhum</string>
+    <string name="back">Voltar</string>
+    <string name="record_date">%1$d %2$s</string>
+    <string name="record_date_year">%1$d %2$s %3$d</string>
+    <string-array name="months">
+        <item>jan</item>
+        <item>fev</item>
+        <item>mar</item>
+        <item>abr</item>
+        <item>mai</item>
+        <item>jun</item>
+        <item>jul</item>
+        <item>ago</item>
+        <item>set</item>
+        <item>out</item>
+        <item>nov</item>
+        <item>dez</item>
+    </string-array>
+
     <string name="resume">Continuar</string>
     <string name="quit">Sair</string>
 
