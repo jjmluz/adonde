@@ -6,15 +6,17 @@
 together, then each player puts a pin on the map where they think it is. The closer the pin, the better.
 
 It's a family game for the living-room TV, played with the remote by 1 to 6 people. There's also a version for
-Android phones and tablets, and one for iPhone and iPad, passed from hand to hand. Inspired by GeoGuessr. It's
-for personal use: sideloaded, not on Google Play.
+phones and tablets, on Android and on iPhone and iPad, passed from hand to hand. Inspired by GeoGuessr. It's for
+personal use: sideloaded, not on Google Play or the App Store.
 
 - [How to play](#how-to-play)
 - [On the TV](#on-the-tv)
 - [On a phone or tablet](#on-a-phone-or-tablet)
-- [Languages](#languages)
-- [Install it](#install-it)
+  - [Android](#android)
+  - [iPhone and iPad](#iphone-and-ipad)
+- [Google Maps keys](#google-maps-keys)
 - [For developers](#for-developers)
+- [License](#license)
 
 ## How to play
 
@@ -37,6 +39,10 @@ A yellow **New record** tag marks the closest guess ever when the answer is show
 records the game broke, and **Records**, next to Start, shows them all.
 
 ## On the TV
+
+The TV version runs on Google TV and Android TV (Android 8 or later).
+
+### Playing with the remote
 
 | Set up | Look around |
 |---|---|
@@ -61,9 +67,30 @@ gets a yellow outline so you know.
 
 ![The final results: Marta wins, then Ana and Tiago, with their total kilometres](docs/screenshots/tv-final.png)
 
+### Installing on the TV
+
+You need [Android Studio](https://developer.android.com/studio) (for its Java and the Android SDK) and an
+[Android Maps key](#google-maps-keys) in `local.properties`.
+
+Turn on debugging in the TV's Developer options, connect it with `adb connect <the TV's address>:5555`, then:
+
+```bash
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+./gradlew testDebugUnitTest installRelease
+```
+
+That runs the tests and installs the TV version. With several devices connected, choose one with
+`ANDROID_SERIAL=<device>` in front of the command.
+
+**Use the release build.** On the TV it starts about four times faster than the debug build. Both are signed with
+the debug key, so either installs over the other and the Maps key works with both.
+
 ## On a phone or tablet
 
-The phone and tablet version plays the same rounds by touch, with the device passed from player to player.
+The phone and tablet version plays the same rounds by touch, with the device passed from player to player. It
+looks and plays the same on Android and on iPhone and iPad.
+
+### Playing by touch
 
 | Set up | Look around | Guess | The answer |
 |---|---|---|---|
@@ -80,86 +107,30 @@ setup and the scoreboard go side by side:
 
 ![The answer with the phone on its side: the map on the left, the scores on the right](docs/screenshots/phone-landscape.jpg)
 
-Android phones and tablets need Android 12 or later.
+### Android
 
-### iPhone and iPad
-
-The `ios/` folder holds the same game for iPhone and iPad (iOS 17 or later), written in SwiftUI. It looks and
-plays like the Android phone version. See [Install it](#on-an-iphone-or-ipad) for how to build it.
-
-## Languages
-
-The game follows the device's language: **English, Portuguese, Spanish and French**. Portuguese is the European
-kind, and Brazilian Portuguese devices get it too. Any other language falls back to English.
-
-Players without a name of their own are "Player 1", "Jogador 1" and so on, and distances are written the way the
-language writes them: "1,234 km" in English, "1 234 km" in Portuguese.
-
-To try another language without changing the whole device's:
-
-```bash
-adb shell cmd locale set-app-locales com.jjmluz.adonde --locales fr-FR
-```
-
-`--locales ""` goes back to following the device.
-
-## Install it
-
-You need [Android Studio](https://developer.android.com/studio) (for its Java and the Android SDK) and a Google
-Maps key. Each new place costs a little of Google's free Street View allowance; see
-[Google Maps limits](#google-maps-limits).
-
-### 1. Get a Google Maps key
-
-1. In the [Google Cloud console](https://console.cloud.google.com/), create a project and turn on billing.
-2. Enable the **Maps SDK for Android**.
-3. Create an API key and restrict it to Android apps, with the package `com.jjmluz.adonde` and the SHA-1 of your
-   debug signing key.
-4. Under Quotas, put a cap on Dynamic Street View, so a bug can't run up a bill.
-
-### 2. Tell the build where things are
-
-Create `local.properties` at the top of the project. Git ignores it, so the key stays private:
-
-```properties
-sdk.dir=/path/to/Android/sdk
-MAPS_API_KEY=your_key
-```
-
-### 3. Build and install
-
-Connect the TV with `adb connect <the TV's address>:5555` (turn on debugging in its Developer options first), then:
+Android phones and tablets need Android 12 or later. Set up Android Studio and the
+[Android Maps key](#google-maps-keys) as for the TV, connect the phone over wireless debugging (in Developer
+options; its port changes, and `adb devices` shows the current one), then:
 
 ```bash
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
-./gradlew testDebugUnitTest installRelease
-```
-
-That runs the tests and installs the TV version. For a phone or tablet instead:
-
-```bash
 ./gradlew :mobile:installRelease
 ```
 
-A phone connects over wireless debugging (in Developer options); its port changes, and `adb devices` shows the
-current one. With several devices connected, choose one with `ANDROID_SERIAL=<device>` in front of the command.
+**The TV and phone versions share one package name**, so one key covers both, but installing one over the other
+replaces it. That's why the phone version only installs when it's named with `:mobile:`, as above.
 
-Good to know:
+### iPhone and iPad
 
-- **Use the release build.** On the TV it starts about four times faster than the debug build. Both are signed
-  with the debug key, so either installs over the other and the Maps key works with both.
-- **The TV and phone versions share one package name**, so one key covers both, but installing one over the
-  other replaces it. That's why the phone version only installs when it's named, as above.
+The `ios/` folder holds the game for iPhone and iPad (iOS 17 or later), written in SwiftUI. On iPad it turns every
+way and can share the screen with other apps.
 
-### On an iPhone or iPad
+You need a Mac with Xcode, and an [iOS Maps key](#google-maps-keys):
 
-You need a Mac with Xcode, and a second Maps key just for iOS:
-
-1. In the same Cloud project, enable the **Maps SDK for iOS** and create a key restricted to iOS apps with the
-   bundle id `com.jjmluz.adonde`.
-2. Copy `ios/Config/Secrets.example.xcconfig` to `ios/Config/Secrets.xcconfig` and put the key in it. Git
+1. Copy `ios/Config/Secrets.example.xcconfig` to `ios/Config/Secrets.xcconfig` and put the key in it. Git
    ignores that file.
-3. Open `ios/Adonde.xcodeproj` in Xcode and run it on a simulator. `AGENTS.md` has the command-line version.
+2. Open `ios/Adonde.xcodeproj` in Xcode and run it on a simulator. `AGENTS.md` has the command-line version.
 
 To run it on your own iPhone or iPad:
 
@@ -169,6 +140,32 @@ To run it on your own iPhone or iPad:
 3. Plug the device in, trust the computer, and turn on Developer Mode (Settings → Privacy & Security).
 4. Run it. With a free Apple ID, trust the developer the first time on the device, in Settings → General → VPN &
    Device Management. Apps signed this way stop opening after 7 days, until they're installed again.
+
+## Google Maps keys
+
+Each new place costs a little of Google's free Street View allowance; see
+[Google Maps limits](#google-maps-limits).
+
+**For Android (the TV and Android phones):**
+
+1. In the [Google Cloud console](https://console.cloud.google.com/), create a project and turn on billing.
+2. Enable the **Maps SDK for Android**.
+3. Create an API key and restrict it to Android apps, with the package `com.jjmluz.adonde` and the SHA-1 of your
+   debug signing key.
+4. Under Quotas, put a cap on Dynamic Street View, so a bug can't run up a bill.
+
+Then create `local.properties` at the top of the project. Git ignores it, so the key stays private:
+
+Create `local.properties` at the top of the project. Git ignores it, so the key stays private:
+
+```properties
+sdk.dir=/path/to/Android/sdk
+MAPS_API_KEY=your_key
+```
+
+**For iPhone and iPad:** in the same Cloud project, enable the **Maps SDK for iOS** and create a second key,
+restricted to iOS apps with the bundle id `com.jjmluz.adonde`. It goes in `ios/Config/Secrets.xcconfig`, as
+described under [iPhone and iPad](#iphone-and-ipad). Put a quota cap on it too.
 
 ## For developers
 
@@ -243,3 +240,8 @@ days behind and hostname lookups hang. Cold-boot it with `emulator -avd <name> -
 - The logo is set in [Outfit](https://github.com/google/fonts/tree/main/ofl/outfit), under the SIL Open Font
   License 1.1.
 - The screenshots in `docs/screenshots` were taken on the Android emulators. Street View imagery © Google.
+
+## License
+
+Adonde's code is under the [MIT License](LICENSE). The Outfit font, the GeoNames and Natural Earth data and the
+Street View imagery keep their own licenses, listed under [Data and credits](#data-and-credits).
