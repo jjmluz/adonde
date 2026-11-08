@@ -27,7 +27,7 @@ tasks.withType<JavaCompile>().configureEach {
     options.release.set(17)
 }
 
-// The Android modules' `testDebugUnitTest` is how the tests are run (see AGENTS.md); the rules' tests live here now.
+// The Android modules' `testDebugUnitTest` is how the tests are run; the rules' tests live here now.
 tasks.register("testDebugUnitTest") {
     dependsOn("jvmTest")
 }

@@ -130,7 +130,12 @@ You need a Mac with Xcode, and an [iOS Maps key](#google-maps-keys):
 
 1. Copy `ios/Config/Secrets.example.xcconfig` to `ios/Config/Secrets.xcconfig` and put the key in it. Git
    ignores that file.
-2. Open `ios/Adonde.xcodeproj` in Xcode and run it on a simulator. `AGENTS.md` has the command-line version.
+2. Open `ios/Adonde.xcodeproj` in Xcode and run it on a simulator, or build it from the command line:
+
+   ```bash
+   cd ios && xcodebuild -project Adonde.xcodeproj -scheme Adonde -sdk iphonesimulator \
+     -destination 'platform=iOS Simulator,name=iPhone 18 Pro' -derivedDataPath build build
+   ```
 
 To run it on your own iPhone or iPad:
 
